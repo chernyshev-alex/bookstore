@@ -1,0 +1,8 @@
+database:
+  host: localhost
+  port: 3306
+  schema: users_db
+  uname: root
+server:
+  host: localhost
+  port: 8081
