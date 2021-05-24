@@ -22,10 +22,22 @@ type ItemControllerInterface interface {
 	Search(w http.ResponseWriter, r *http.Request)
 }
 
-type itemController struct{}
+type itemController struct {
+	oauthService oauth.OAuthInterface
+	itemsService services.ItemsServiceInterface
+}
 
-var (
-	ItemController ItemControllerInterface = &itemController{}
+func NewItemController(oauthService oauth.OAuthInterface,
+	itemService services.ItemsServiceInterface) ItemControllerInterface {
+	return &itemController{
+		oauthService: oauthService,
+		itemsService: itemService,
+	}
+}
+
+var ( // TODO  remove
+//	ItemController ItemControllerInterface = &itemController{}
+// ItemController ItemControllerInterface = &itemController{}
 )
 
 func (c *itemController) Ping(w http.ResponseWriter, rq *http.Request) {
@@ -35,12 +47,12 @@ func (c *itemController) Ping(w http.ResponseWriter, rq *http.Request) {
 
 func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
 
-	if err := oauth.AuthenticateRequest(rq); err != nil {
+	if err := c.oauthService.AuthenticateRequest(rq); err != nil {
 		http_utils.ResponseError(w, err)
 		return
 	}
 
-	callerId := oauth.GetCallerId(rq)
+	callerId := c.oauthService.GetCallerId(rq)
 	if callerId == 0 {
 		http_utils.ResponseError(w, rest_errors.NewAuthorizationError("no user info in the token"))
 		return
@@ -60,11 +72,11 @@ func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
 	}
 
 	item.Seller = callerId
-	result, createErr := services.ItemService.Create(item)
+	result, createErr := c.itemsService.Create(item)
 	if createErr != nil {
 		http_utils.ResponseError(w, createErr)
+		return
 	}
-
 	http_utils.ResponseJson(w, http.StatusCreated, result)
 }
 

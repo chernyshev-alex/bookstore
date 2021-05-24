@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -207,11 +208,13 @@ func TestUpdateUserOk(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &u); err != nil {
 		t.Error("invalid body response", response.Body)
 	}
+
+	fmt.Println("sdsds", response.Body)
 	if u.FirstName != "updated" {
 		t.Error("not expected", u.FirstName)
 	}
 
-	assertStatus(t, ctx, http.StatusOK)
+	assertStatus(t, ctx, http.StatusOK+1)
 }
 
 func TestUpdateUserFailed(t *testing.T) {
