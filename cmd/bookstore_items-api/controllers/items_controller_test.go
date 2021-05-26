@@ -9,107 +9,144 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
 	"github.com/chernyshev-alex/bookstore_items-api/mocks"
 	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-// type OAuthIntefaceMock interface {
-// 	AuthenticateRequest(*http.Request) *rest_errors.RestErr
-// 	GetCallerId(*http.Request) int64
-// }
+type MockOAuth struct {
+	mock.Mock
+}
 
-// type ItemsServiceInterfaceMock interface {
-// 	Create(items.Item) (*items.Item, rest_errors.RestErr)
-// 	Get(string) (*items.Item, rest_errors.RestErr)
-// 	Search(queries.EsQuery) ([]items.Item, rest_errors.RestErr)
-// }
+func (m *MockOAuth) AuthenticateRequest(rq *http.Request) rest_errors.RestErr {
+	ret := m.Called(rq)
+	var r1 rest_errors.RestErr
+	if rf, ok := ret.Get(0).(func(*http.Request) rest_errors.RestErr); ok {
+		r1 = rf(rq)
+	} else {
+		if ret.Get(0) != nil {
+			r1 = ret.Get(0).(rest_errors.RestErr)
+		}
+	}
+	return r1
+}
 
-// https://github.com/kyleconroy/sqlc
+func (m *MockOAuth) IsPublic(rq *http.Request) bool {
+	args := m.Called(rq)
+	return args.Bool(0)
+}
 
-// type oauthServiceMock struct {
-// 	isPublicFn            func(*http.Request) bool
-// 	getCallerIdFn         func(*http.Request) int64
-// 	getClientIdFn         func(*http.Request) int64
-// 	authenticateRequestFn func(*http.Request) rest_errors.RestErr
-// }
+func (m *MockOAuth) GetCallerId(rq *http.Request) int64 {
+	args := m.Called(rq)
+	return int64(args.Int(0))
+}
+func (m *MockOAuth) GetClientId(rq *http.Request) int64 {
+	args := m.Called(rq)
+	return int64(args.Int(0))
+}
 
-var (
-	mockedItemsService = new(mocks.ItemsServiceInterface)
-	itemsController    = NewItemController(
-		oauth.ProvideOAuthClient(http.DefaultClient),
-		mockedItemsService,
+type ItemControllerSuite struct {
+	suite.Suite
+	mockedItemsService *mocks.ItemsServiceInterface
+	mockedOAuthService *MockOAuth
+	itemsController    ItemControllerInterface
+}
+
+func TestItemControllerSuite(t *testing.T) {
+	suite.Run(t, new(ItemControllerSuite))
+}
+
+func (s *ItemControllerSuite) SetupTest() {
+	s.mockedOAuthService = new(MockOAuth)
+	s.mockedItemsService = new(mocks.ItemsServiceInterface)
+	s.itemsController = NewItemController(
+		s.mockedOAuthService,
+		s.mockedItemsService,
 	)
-)
+}
 
-func TestCreateOk(t *testing.T) {
+func (s *ItemControllerSuite) TestCreateOk() {
 	var (
 		callerId int64 = 100
 		item           = items.Item{Id: "", Seller: callerId}
 	)
 
-	bytes, _ := json.Marshal(item)
-	req := httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(string(bytes)))
+	req := requestForBody(http.MethodPost, "/items", &item)
 
 	req.Header.Add("X-Caller-Id", strconv.FormatInt(callerId, 10))
 
 	resp := httptest.NewRecorder()
 
-	mockedItemsService.On("Create", mock.IsType(item)).Return(func(item items.Item) *items.Item {
-		item.Id = "assgined"
+	s.mockedOAuthService.On("AuthenticateRequest", mock.IsType(req)).Return(nil)
+
+	s.mockedItemsService.On("Create", mock.IsType(item)).Return(func(item items.Item) *items.Item {
+		item.Id = "assigned"
 		return &item
 	}, nil)
 
-	itemsController.Create(resp, req)
+	s.itemsController.Create(resp, req)
 
 	var itemResult items.Item
-	if err := json.Unmarshal(resp.Body.Bytes(), &itemResult); err != nil {
-		t.Error("bad body response", resp.Body)
-	}
+	err := json.Unmarshal(resp.Body.Bytes(), &itemResult)
 
-	mockedItemsService.AssertExpectations(t)
+	s.mockedItemsService.AssertExpectations(s.T())
 
-	assert.Equal(t, http.StatusCreated, resp.Code)
-	assert.Equal(t, "assgined", itemResult.Id)
-	assert.Equal(t, callerId, itemResult.Seller)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), http.StatusCreated, resp.Code)
+	assert.Equal(s.T(), "assigned", itemResult.Id)
+	assert.Equal(s.T(), callerId, itemResult.Seller)
 }
 
-type ARestErr struct {
-	Fmessage string        `json:"message"`
-	Fstatus  int           `json:"status"`
-	Ferror   string        `json:"error"`
-	Fcauses  []interface{} `json:"causes"`
+func (s *ItemControllerSuite) TestCreateFailedNotAuthenticated() {
+	req := requestForBody(http.MethodPost, "/items", &items.Item{})
+	resp := httptest.NewRecorder()
+
+	s.mockedOAuthService.On("AuthenticateRequest", mock.IsType(req)).Return(
+		rest_errors.NewAuthorizationError("oauth error"))
+
+	s.itemsController.Create(resp, req)
+	restError, err := rest_errors.NewRestErrorFromBytes(resp.Body.Bytes())
+
+	s.mockedItemsService.AssertExpectations(s.T())
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), http.StatusUnauthorized, restError.Status())
+	assert.Equal(s.T(), http.StatusUnauthorized, resp.Code)
 }
 
-func TestCreateSaveFailed(t *testing.T) {
+func (s *ItemControllerSuite) TestCreateFailedOnSave() {
 	var (
 		callerId int64 = 100
 		item           = items.Item{Id: "", Seller: callerId}
 	)
 
-	bytes, _ := json.Marshal(item)
-	req := httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(string(bytes)))
+	req := requestForBody(http.MethodPost, "/items", &item)
 
 	req.Header.Add("X-Caller-Id", strconv.FormatInt(callerId, 10))
 
 	resp := httptest.NewRecorder()
 
-	mockedItemsService.On("Create", mock.IsType(item)).Return(nil,
+	s.mockedItemsService.On("Create", mock.IsType(item)).Return(nil,
 		func(item items.Item) rest_errors.RestErr {
 			return rest_errors.NewInternalServerError("item service", errors.New("failed"))
 		})
 
-	itemsController.Create(resp, req)
+	s.itemsController.Create(resp, req)
 
 	restError, err := rest_errors.NewRestErrorFromBytes(resp.Body.Bytes())
-	if err != nil {
-		t.Error("bad body response", resp.Body)
-	}
 
-	mockedItemsService.AssertExpectations(t)
-	assert.Equal(t, http.StatusInternalServerError, restError.Status())
-	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+	s.mockedItemsService.AssertExpectations(s.T())
+
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), http.StatusInternalServerError, restError.Status())
+	assert.Equal(s.T(), http.StatusInternalServerError, resp.Code)
+}
+
+// helpers
+
+func requestForBody(httpMethod, urlPath string, item *items.Item) *http.Request {
+	bytes, _ := json.Marshal(item)
+	return httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(string(bytes)))
 }

@@ -35,18 +35,12 @@ func NewItemController(oauthService oauth.OAuthInterface,
 	}
 }
 
-var ( // TODO  remove
-//	ItemController ItemControllerInterface = &itemController{}
-// ItemController ItemControllerInterface = &itemController{}
-)
-
 func (c *itemController) Ping(w http.ResponseWriter, rq *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("pong"))
 }
 
 func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
-
 	if err := c.oauthService.AuthenticateRequest(rq); err != nil {
 		http_utils.ResponseError(w, err)
 		return
