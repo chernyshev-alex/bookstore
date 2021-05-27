@@ -21,7 +21,7 @@ func StartApp() {
 
 	router.HandleFunc("/ping", controllers.ItemController.Ping).Methods(http.MethodGet)
 	router.HandleFunc("/items", controllers.ItemController.Create).Methods(http.MethodPost)
-	router.HandleFunc("/items{id}", controllers.ItemController.Get).Methods(http.MethodGet)
+	router.HandleFunc("/items/{id}", controllers.ItemController.Get).Methods(http.MethodGet)
 	router.HandleFunc("/items/search", controllers.ItemController.Search).Methods(http.MethodPost)
 
 	srv := http.Server{

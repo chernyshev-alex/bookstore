@@ -75,11 +75,15 @@ func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
 }
 
 func (c *itemController) Get(w http.ResponseWriter, rq *http.Request) {
-	vars := mux.Vars(rq)
-	itemId := strings.TrimSpace(vars["id"])
-	item, err := services.ItemService.Get(itemId)
+	itemId := rq.Context().Value("id")
+	if itemId == nil {
+		itemId = strings.TrimSpace(mux.Vars(rq)["id"])
+	}
+
+	item, err := c.itemsService.Get(itemId.(string))
 	if err != nil {
 		http_utils.ResponseError(w, err)
+		return
 	}
 	http_utils.ResponseJson(w, http.StatusOK, item)
 }
@@ -94,12 +98,12 @@ func (c *itemController) Search(w http.ResponseWriter, rq *http.Request) {
 
 	var q queries.EsQuery
 	if err := json.Unmarshal(b, &q); err != nil {
-		apiErr := rest_errors.NewBadRequestError("bad json body")
+		apiErr := rest_errors.NewBadRequestError("bad query")
 		http_utils.ResponseError(w, apiErr)
 		return
 	}
 
-	items, searchErr := services.ItemService.Search(q)
+	items, searchErr := c.itemsService.Search(q)
 	if searchErr != nil {
 		http_utils.ResponseError(w, searchErr)
 		return
