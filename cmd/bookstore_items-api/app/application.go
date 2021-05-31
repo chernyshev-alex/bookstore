@@ -11,22 +11,30 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var (
-	router = mux.NewRouter()
-)
+type Application struct {
+	router *mux.Router
+	items  controllers.ItemControllerInterface
+}
 
-func StartApp() {
+func NewApp(itemsController controllers.ItemControllerInterface) *Application {
+	return &Application{
+		router: mux.NewRouter(),
+		items:  itemsController,
+	}
+}
+
+func (app *Application) StartApp() {
 
 	es.Init()
 
-	router.HandleFunc("/ping", controllers.ItemController.Ping).Methods(http.MethodGet)
-	router.HandleFunc("/items", controllers.ItemController.Create).Methods(http.MethodPost)
-	router.HandleFunc("/items/{id}", controllers.ItemController.Get).Methods(http.MethodGet)
-	router.HandleFunc("/items/search", controllers.ItemController.Search).Methods(http.MethodPost)
+	app.router.HandleFunc("/ping", app.items.Ping).Methods(http.MethodGet)
+	app.router.HandleFunc("/items", app.items.Create).Methods(http.MethodPost)
+	app.router.HandleFunc("/items/{id}", app.items.Get).Methods(http.MethodGet)
+	app.router.HandleFunc("/items/search", app.items.Search).Methods(http.MethodPost)
 
 	srv := http.Server{
 		Addr:         "127.0.0.1:8080",
-		Handler:      router,
+		Handler:      app.router,
 		WriteTimeout: 200 * time.Millisecond,
 		ReadTimeout:  20 * time.Millisecond,
 		IdleTimeout:  10 * time.Millisecond,
