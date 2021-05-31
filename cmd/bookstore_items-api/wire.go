@@ -16,13 +16,14 @@ func inject() *app.Application {
 	panic(
 		wire.Build(
 
-			wire.Value(http.DefaultClient),
+			app.NewApp,
+			controllers.NewItemController,
+			services.NewItemsService,
+
 			oauth.ProvideOAuthClient,
-			wire.Bind(new(oauth.HTTPClientInterface), new(*http.Client)),
 			wire.Bind(new(oauth.OAuthInterface), new(*oauth.OAuthClient)),
 
-			services.NewItemsService,
-			controllers.NewItemController,
-			app.NewApp,
+			wire.Bind(new(oauth.HTTPClientInterface), new(*http.Client)),
+			wire.Value(http.DefaultClient),
 		))
 }
