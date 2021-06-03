@@ -14,12 +14,20 @@ const (
 	typeItem = "_doc"
 )
 
-func (it *Item) Save() rest_errors.RestErr {
+//go:generate mockery  --name=ItemsPersistInterface --output ../../mocks
+type ItemsPersistInterface interface {
+	Save(it *Item) rest_errors.RestErr
+	Get(Item) (*Item, rest_errors.RestErr)
+	Search(q queries.EsQuery) ([]Item, rest_errors.RestErr)
+}
+type Persist struct {
+}
+
+func (p Persist) Save(it *Item) rest_errors.RestErr {
 	result, err := es.Client.Index(itemName, typeItem, it)
 	if err != nil {
 		rest_errors.NewInternalServerError("save item error", err)
 	}
-
 	it.Id = result.Id
 	return nil
 }

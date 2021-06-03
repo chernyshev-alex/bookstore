@@ -47,5 +47,5 @@ func main() {
 	mysqlConf := users_db.MakeMySQLConfig(*conf)
 
 	app := inject(mysqlConf)
-	app.StartApplication()
+	app.StartApp()
 }

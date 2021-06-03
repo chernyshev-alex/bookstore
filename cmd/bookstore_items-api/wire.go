@@ -1,18 +1,19 @@
-package main
-
 //+build wireinject
+
+package main
 
 import (
 	"net/http"
 
 	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore_items-api/app"
+	"github.com/chernyshev-alex/bookstore_items-api/config"
 	"github.com/chernyshev-alex/bookstore_items-api/controllers"
 	"github.com/chernyshev-alex/bookstore_items-api/services"
 	"github.com/google/wire"
 )
 
-func inject() *app.Application {
+func inject(appConfig *config.Config) *app.Application {
 	panic(
 		wire.Build(
 

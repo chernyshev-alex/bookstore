@@ -8,6 +8,7 @@ package main
 import (
 	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore_items-api/app"
+	"github.com/chernyshev-alex/bookstore_items-api/config"
 	"github.com/chernyshev-alex/bookstore_items-api/controllers"
 	"github.com/chernyshev-alex/bookstore_items-api/services"
 	"net/http"
@@ -15,12 +16,12 @@ import (
 
 // Injectors from wire.go:
 
-func inject() *app.Application {
+func inject(appConfig *config.Config) *app.Application {
 	client := _wireClientValue
 	oAuthClient := oauth.ProvideOAuthClient(client)
 	itemsServiceInterface := services.NewItemsService()
 	itemControllerInterface := controllers.NewItemController(oAuthClient, itemsServiceInterface)
-	application := app.NewApp(itemControllerInterface)
+	application := app.NewApp(appConfig, itemControllerInterface)
 	return application
 }
 

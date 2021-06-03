@@ -43,7 +43,6 @@ func main() {
 
 	fmt.Println("starting with config ", args.ConfigPath)
 
-	_ = conf
-	app := inject()
+	app := inject(conf)
 	app.StartApp()
 }

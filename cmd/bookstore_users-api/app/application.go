@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/chernyshev-alex/bookstore_users-api/config"
 	"github.com/chernyshev-alex/bookstore_users-api/controllers/ping"
 	"github.com/chernyshev-alex/bookstore_users-api/controllers/users"
 	"github.com/chernyshev-alex/bookstore_utils_go/logger"
@@ -11,13 +12,16 @@ type Application struct {
 	router         *gin.Engine
 	pingController *ping.PingController
 	userController *users.UserController
+	appConfig      *config.Config
 }
 
-func ProvideApp(pingController *ping.PingController, userController *users.UserController) Application {
+func ProvideApp(appConfig *config.Config, pingController *ping.PingController,
+	userController *users.UserController) Application {
 	return Application{
 		router:         gin.Default(),
 		pingController: pingController,
 		userController: userController,
+		appConfig:      appConfig,
 	}
 }
 
@@ -32,8 +36,8 @@ func (app *Application) mapUrls() {
 	app.router.POST("/users/login", app.userController.Login)
 }
 
-func (app *Application) StartApplication() {
+func (app *Application) StartApp() {
 	app.mapUrls()
-	logger.Info("starting ..")
-	app.router.Run(":8081")
+	logger.Info("listening on port  " + app.appConfig.Server.Port)
+	app.router.Run(":" + app.appConfig.Server.Port)
 }
