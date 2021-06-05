@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+//go:generate mockery  --name=ItemsServiceInterface --output ../mocks
 type ItemServiceSuite struct {
 	suite.Suite
 	itemsService ItemsServiceInterface

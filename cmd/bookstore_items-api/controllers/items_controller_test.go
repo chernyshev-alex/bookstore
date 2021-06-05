@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	oaumocks "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
 	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
 	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
 	"github.com/chernyshev-alex/bookstore_items-api/mocks"
@@ -19,41 +20,41 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type MockOAuth struct {
-	mock.Mock
-}
+// type MockOAuth struct {
+// 	mock.Mock
+// }
 
-func (m *MockOAuth) AuthenticateRequest(rq *http.Request) rest_errors.RestErr {
-	ret := m.Called(rq)
-	var r1 rest_errors.RestErr
-	if rf, ok := ret.Get(0).(func(*http.Request) rest_errors.RestErr); ok {
-		r1 = rf(rq)
-	} else {
-		if ret.Get(0) != nil {
-			r1 = ret.Get(0).(rest_errors.RestErr)
-		}
-	}
-	return r1
-}
+// func (m *MockOAuth) AuthenticateRequest(rq *http.Request) rest_errors.RestErr {
+// 	ret := m.Called(rq)
+// 	var r1 rest_errors.RestErr
+// 	if rf, ok := ret.Get(0).(func(*http.Request) rest_errors.RestErr); ok {
+// 		r1 = rf(rq)
+// 	} else {
+// 		if ret.Get(0) != nil {
+// 			r1 = ret.Get(0).(rest_errors.RestErr)
+// 		}
+// 	}
+// 	return r1
+// }
 
-func (m *MockOAuth) IsPublic(rq *http.Request) bool {
-	args := m.Called(rq)
-	return args.Bool(0)
-}
+// func (m *MockOAuth) IsPublic(rq *http.Request) bool {
+// 	args := m.Called(rq)
+// 	return args.Bool(0)
+// }
 
-func (m *MockOAuth) GetCallerId(rq *http.Request) int64 {
-	args := m.Called(rq)
-	return int64(args.Int(0))
-}
-func (m *MockOAuth) GetClientId(rq *http.Request) int64 {
-	args := m.Called(rq)
-	return int64(args.Int(0))
-}
+// func (m *MockOAuth) GetCallerId(rq *http.Request) int64 {
+// 	args := m.Called(rq)
+// 	return int64(args.Int(0))
+// }
+// func (m *MockOAuth) GetClientId(rq *http.Request) int64 {
+// 	args := m.Called(rq)
+// 	return int64(args.Int(0))
+// }
 
 type ItemControllerSuite struct {
 	suite.Suite
 	mockedItemsService *mocks.ItemsServiceInterface
-	mockedOAuthService *MockOAuth
+	mockedOAuthService *oaumocks.OAuthInterface
 	itemsController    ItemControllerInterface
 }
 
@@ -62,7 +63,7 @@ func TestItemControllerSuite(t *testing.T) {
 }
 
 func (s *ItemControllerSuite) SetupTest() {
-	s.mockedOAuthService = new(MockOAuth)
+	s.mockedOAuthService = new(oaumocks.OAuthInterface)
 	s.mockedItemsService = new(mocks.ItemsServiceInterface)
 	s.itemsController = NewItemController(
 		s.mockedOAuthService,

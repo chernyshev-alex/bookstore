@@ -6,7 +6,6 @@ import (
 	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
 )
 
-//go:generate mockery  --name=ItemsServiceInterface --output ../mocks
 type ItemsServiceInterface interface {
 	Create(items.Item) (*items.Item, rest_errors.RestErr)
 	Get(string) (*items.Item, rest_errors.RestErr)

@@ -9,6 +9,7 @@ import (
 	"github.com/chernyshev-alex/bookstore_items-api/app"
 	"github.com/chernyshev-alex/bookstore_items-api/config"
 	"github.com/chernyshev-alex/bookstore_items-api/controllers"
+	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
 	"github.com/chernyshev-alex/bookstore_items-api/services"
 	"github.com/google/wire"
 )
@@ -20,6 +21,7 @@ func inject(appConfig *config.Config) *app.Application {
 			app.NewApp,
 			controllers.NewItemController,
 			services.NewItemsService,
+			items.NewItemPersister,
 
 			oauth.ProvideOAuthClient,
 			wire.Bind(new(oauth.OAuthInterface), new(*oauth.OAuthClient)),

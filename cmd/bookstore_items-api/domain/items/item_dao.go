@@ -20,10 +20,14 @@ type ItemsPersistInterface interface {
 	Get(Item) (*Item, rest_errors.RestErr)
 	Search(q queries.EsQuery) ([]Item, rest_errors.RestErr)
 }
-type Persist struct {
+type persist struct {
 }
 
-func (p Persist) Save(it *Item) rest_errors.RestErr {
+func NewItemPersister() ItemsPersistInterface {
+	return new(persist)
+}
+
+func (p *persist) Save(it *Item) rest_errors.RestErr {
 	result, err := es.Client.Index(itemName, typeItem, it)
 	if err != nil {
 		rest_errors.NewInternalServerError("save item error", err)
@@ -32,17 +36,17 @@ func (p Persist) Save(it *Item) rest_errors.RestErr {
 	return nil
 }
 
-func (it *Item) Get() rest_errors.RestErr {
+func (p persist) Get(it Item) (*Item, rest_errors.RestErr) {
 	result, err := es.Client.Get(itemName, typeItem, it.Id)
 	if err != nil {
-		rest_errors.NewInternalServerError("save item error", err)
+		return nil, rest_errors.NewInternalServerError("save item error", err)
 	}
 
 	it.Id = result.Id
-	return nil
+	return &it, nil
 }
 
-func (it Item) Search(q queries.EsQuery) ([]Item, rest_errors.RestErr) {
+func (p persist) Search(q queries.EsQuery) ([]Item, rest_errors.RestErr) {
 	result, err := es.Client.Search(itemName, q.Build())
 	if err != nil {
 		return nil, rest_errors.NewInternalServerError("save item error", errors.New("ELK error"))
