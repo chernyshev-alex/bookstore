@@ -13,208 +13,204 @@ import (
 
 	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
+
+//go:generate mockery  --name=OAuthInterface --output ../mocks
+//go:generate mockery  --name=HTTPClientInterface --output ../mocks
 
 type MockHttpClient struct {
 	getFn func(url string) (resp *http.Response, err error)
 }
 
-var (
-	oauthService = ProvideOAuthClient(HttpConfigClient{
-		httpClient: new(MockHttpClient),
-		baseURL:    "",
-	})
-)
-
 func (m MockHttpClient) Get(url string) (resp *http.Response, err error) {
 	return m.getFn(url)
 }
 
-func TestOauthConstants(t *testing.T) {
-	assert.EqualValues(t, "X-Public", headerXPublic)
-	assert.EqualValues(t, "X-Client-Id", headerXClientId)
-	assert.EqualValues(t, "X-Caller-Id", headerXCallerId)
-	assert.EqualValues(t, "access_token", paramAccessToken)
+type OAuthTestSuite struct {
+	suite.Suite
+	httpClient  *MockHttpClient
+	oauthClient *OAuthClient
 }
 
-func TestIsPublicNilRequest(t *testing.T) {
-	assert.True(t, oauthService.IsPublic(nil))
+func TestOAuthTestSuite(t *testing.T) {
+	suite.Run(t, new(OAuthTestSuite))
 }
 
-func TestIsPublicNoErr(t *testing.T) {
+func (s *OAuthTestSuite) SetupTest() {
+	s.httpClient = new(MockHttpClient)
+	s.oauthClient = ProvideOAuthClient(s.httpClient, "")
+}
+
+func (s *OAuthTestSuite) TestOauthConstants() {
+	assert.EqualValues(s.T(), "X-Public", headerXPublic)
+	assert.EqualValues(s.T(), "X-Client-Id", headerXClientId)
+	assert.EqualValues(s.T(), "X-Caller-Id", headerXCallerId)
+	assert.EqualValues(s.T(), "access_token", paramAccessToken)
+}
+
+func (s *OAuthTestSuite) TestIsPublicNilRequest() {
+	assert.True(s.T(), s.oauthClient.IsPublic(nil))
+}
+
+func (s *OAuthTestSuite) TestIsPublicNoErr() {
 	rq := http.Request{Header: make(http.Header)}
-	assert.False(t, oauthService.IsPublic(&rq))
+	assert.False(s.T(), s.oauthClient.IsPublic(&rq))
 	rq.Header.Add(headerXPublic, "true")
-	assert.True(t, oauthService.IsPublic(&rq))
+	assert.True(s.T(), s.oauthClient.IsPublic(&rq))
 }
 
-func TestGetCallerIdNilRequest(t *testing.T) {
-	assert.Equal(t, int64(0), oauthService.GetCallerId(nil))
+func (s *OAuthTestSuite) TestGetCallerIdNilRequest() {
+	assert.Equal(s.T(), int64(0), s.oauthClient.GetCallerId(nil))
 }
 
-func TestGetCallerId(t *testing.T) {
+func (s *OAuthTestSuite) TestGetCallerId() {
 	rq := http.Request{Header: make(http.Header)}
 
 	rq.Header.Add(headerXCallerId, "not number")
-	assert.Equal(t, int64(0), oauthService.GetCallerId(&rq))
+	assert.Equal(s.T(), int64(0), s.oauthClient.GetCallerId(&rq))
 
 	rq.Header.Del(headerXCallerId)
 	rq.Header.Add(headerXCallerId, "1")
-	assert.Equal(t, int64(1), oauthService.GetCallerId(&rq))
+	assert.Equal(s.T(), int64(1), s.oauthClient.GetCallerId(&rq))
 }
 
-func TestGetClientIdNilRequest(t *testing.T) {
-	assert.Equal(t, int64(0), oauthService.GetClientId(nil))
+func (s *OAuthTestSuite) TestGetClientIdNilRequest() {
+	assert.Equal(s.T(), int64(0), s.oauthClient.GetClientId(nil))
 }
-func TestGetClientId(t *testing.T) {
+func (s *OAuthTestSuite) TestGetClientId() {
 	rq := http.Request{Header: make(http.Header)}
 
 	rq.Header.Add(headerXClientId, "not number")
-	assert.Equal(t, int64(0), oauthService.GetClientId(&rq))
+	assert.Equal(s.T(), int64(0), s.oauthClient.GetClientId(&rq))
 
 	rq.Header.Del(headerXClientId)
 	rq.Header.Add(headerXClientId, "1")
-	assert.Equal(t, int64(1), oauthService.GetClientId(&rq))
+	assert.Equal(s.T(), int64(1), s.oauthClient.GetClientId(&rq))
 }
-func TestAuthenticateRequestNull(t *testing.T) {
-	assert.Nil(t, oauthService.AuthenticateRequest(nil))
+func (s *OAuthTestSuite) TestAuthenticateRequestNull() {
+	assert.Nil(s.T(), s.oauthClient.AuthenticateRequest(nil))
 }
-func TestAuthenticateRequestNoParamToken(t *testing.T) {
+func (s *OAuthTestSuite) TestAuthenticateRequestNoParamToken() {
 	url, _ := url.Parse("http://localhost")
 	rq := http.Request{
 		Header: make(http.Header),
 		URL:    url,
 	}
-	assert.Nil(t, oauthService.AuthenticateRequest(&rq))
+	assert.Nil(s.T(), s.oauthClient.AuthenticateRequest(&rq))
 }
 
-func TestAuthenticateRequestOk(t *testing.T) {
+func (s *OAuthTestSuite) TestAuthenticateRequestOk() {
 	token := accessToken{Id: "AbC123", UserId: 1, ClientId: 100}
 	url, _ := url.Parse(fmt.Sprintf("%s?%s=%s", "http://localhost", paramAccessToken, token.Id))
 	rq := http.Request{
 		Header: make(http.Header),
 		URL:    url,
 	}
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       tokenAsReadCloser(token),
-			}, nil
-		}
-	})
-	oauthService.AuthenticateRequest(&rq)
+
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       tokenAsReadCloser(token),
+		}, nil
+	}
+
+	s.oauthClient.AuthenticateRequest(&rq)
 
 	clientId, _ := strconv.ParseInt(rq.Header.Get(headerXClientId), 10, 64)
 	callerId, _ := strconv.ParseInt(rq.Header.Get(headerXCallerId), 10, 64)
 
-	assert.Equal(t, token.ClientId, clientId)
-	assert.Equal(t, token.UserId, callerId)
+	assert.Equal(s.T(), token.ClientId, clientId)
+	assert.Equal(s.T(), token.UserId, callerId)
 }
 
-func TestAuthenticateRequestFailedTokenNotExist(t *testing.T) {
+func (s *OAuthTestSuite) TestAuthenticateRequestFailedTokenNotExist() {
 	token := accessToken{Id: "AbC123", UserId: 0, ClientId: 0}
 	url, _ := url.Parse(fmt.Sprintf("%s?%s=%s", "http://localhost", paramAccessToken, token.Id))
 	rq := http.Request{
 		Header: make(http.Header),
 		URL:    url,
 	}
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: http.StatusNotFound,
-				Body:       tokenAsReadCloser(token),
-			}, nil
-		}
-	})
-	oauthService.AuthenticateRequest(&rq)
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return &http.Response{
+			StatusCode: http.StatusNotFound,
+			Body:       tokenAsReadCloser(token),
+		}, nil
+	}
+
+	s.oauthClient.AuthenticateRequest(&rq)
 
 	clientId, _ := strconv.ParseInt(rq.Header.Get(headerXClientId), 10, 64)
 	callerId, _ := strconv.ParseInt(rq.Header.Get(headerXCallerId), 10, 64)
 
-	assert.Equal(t, int64(0), clientId)
-	assert.Equal(t, int64(0), callerId)
+	assert.Equal(s.T(), int64(0), clientId)
+	assert.Equal(s.T(), int64(0), callerId)
 }
 
-func TestAuthenticateRequestFailedOAuthServiceNotAvailable(t *testing.T) {
+func (s *OAuthTestSuite) TestAuthenticateRequestFailedOAuthServiceNotAvailable() {
 	token := accessToken{Id: "AbC123", UserId: 1, ClientId: 100}
 	url, _ := url.Parse(fmt.Sprintf("%s?%s=%s", "http://localhost", paramAccessToken, token.Id))
 	rq := http.Request{
 		Header: make(http.Header),
 		URL:    url,
 	}
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return nil, rest_errors.NewInternalServerError("failed request", errors.New("oauth failed"))
-		}
-	})
-	oauthService.AuthenticateRequest(&rq)
+
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return nil, rest_errors.NewInternalServerError("failed request", errors.New("oauth failed"))
+	}
+	s.oauthClient.AuthenticateRequest(&rq)
 
 	clientId, _ := strconv.ParseInt(rq.Header.Get(headerXClientId), 10, 64)
 	callerId, _ := strconv.ParseInt(rq.Header.Get(headerXCallerId), 10, 64)
 
-	assert.Equal(t, int64(0), clientId)
-	assert.Equal(t, int64(0), callerId)
+	assert.Equal(s.T(), int64(0), clientId)
+	assert.Equal(s.T(), int64(0), callerId)
 }
 
-func TestGetAccessTokenOk(t *testing.T) {
+func (s *OAuthTestSuite) TestGetAccessTokenOk() {
 	token := accessToken{Id: "AbC123", UserId: 1, ClientId: 100}
 
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       tokenAsReadCloser(token),
-			}, nil
-		}
-	})
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       tokenAsReadCloser(token),
+		}, nil
+	}
 
-	accessToken, err := oauthService.GetAccessToken("AbC123")
+	accessToken, err := s.oauthClient.GetAccessToken("AbC123")
 
-	assert.Nil(t, err)
-	assert.NotNil(t, accessToken)
+	assert.Nil(s.T(), err)
+	assert.NotNil(s.T(), accessToken)
 }
 
-func TestGetAccessTokenServiceNotAvailable(t *testing.T) {
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return nil, errors.New("bad response")
-		}
-	})
+func (s *OAuthTestSuite) TestGetAccessTokenServiceNotAvailable() {
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return nil, errors.New("bad response")
+	}
 
-	accessToken, err := oauthService.GetAccessToken("AbC123")
+	accessToken, err := s.oauthClient.GetAccessToken("AbC123")
 
-	assert.Nil(t, accessToken)
-	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusInternalServerError, err.Status())
+	assert.Nil(s.T(), accessToken)
+	assert.NotNil(s.T(), err)
+	assert.EqualValues(s.T(), http.StatusInternalServerError, err.Status())
 }
 
-func TestGetAccessTokenBadBodyResponse(t *testing.T) {
-	oauthService := withMock(func(mock *MockHttpClient) {
-		mock.getFn = func(url string) (resp *http.Response, err error) {
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader("bad json accessToken")),
-			}, nil
-		}
-	})
+func (s *OAuthTestSuite) TestGetAccessTokenBadBodyResponse() {
+	s.httpClient.getFn = func(url string) (resp *http.Response, err error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("bad json accessToken")),
+		}, nil
+	}
 
-	accessToken, err := oauthService.GetAccessToken("AbC123")
+	accessToken, err := s.oauthClient.GetAccessToken("AbC123")
 
-	assert.Nil(t, accessToken)
-	assert.NotNil(t, err)
-	assert.EqualValues(t, http.StatusInternalServerError, err.Status())
+	assert.Nil(s.T(), accessToken)
+	assert.NotNil(s.T(), err)
+	assert.EqualValues(s.T(), http.StatusInternalServerError, err.Status())
 }
 
 // helpers
-
-func withMock(configFn func(*MockHttpClient)) *OAuthClient {
-	httpClient := new(MockHttpClient)
-	configFn(httpClient)
-	return ProvideOAuthClient(HttpConfigClient{
-		httpClient: httpClient,
-		baseURL:    ""})
-}
 
 func serialize(token accessToken) string {
 	bytes, _ := json.Marshal(token)

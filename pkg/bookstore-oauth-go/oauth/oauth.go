@@ -30,23 +30,21 @@ type OAuthInterface interface {
 	GetClientId(*http.Request) int64
 	AuthenticateRequest(*http.Request) rest_errors.RestErr
 }
-type HTTPClientInterface interface {
+type HttpClientInterface interface {
 	Get(url string) (resp *http.Response, err error)
 }
 type OAuthClient struct {
 	baseURL    string
-	httpClient HTTPClientInterface
-}
-type HttpConfigClient struct {
-	httpClient HTTPClientInterface
-	baseURL    string
+	httpClient HttpClientInterface
 }
 
-func ProvideOAuthClient(conf HttpConfigClient) *OAuthClient {
-	return &OAuthClient{
-		httpClient: conf.httpClient,
-		baseURL:    conf.baseURL,
-	}
+// type HttpConfigClient struct {
+// 	httpClient HttpClientInterface
+// 	baseURL    string
+// }
+
+func ProvideOAuthClient(httpClient HttpClientInterface, baseURL string) *OAuthClient {
+	return &OAuthClient{httpClient: httpClient, baseURL: baseURL}
 }
 
 func (oa OAuthClient) IsPublic(req *http.Request) bool {
