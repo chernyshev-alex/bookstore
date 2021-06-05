@@ -1,4 +1,4 @@
-module github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go
+module github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go
 
 go 1.16
 
