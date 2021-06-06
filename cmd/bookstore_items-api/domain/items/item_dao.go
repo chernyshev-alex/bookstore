@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/chernyshev-alex/bookstore_items-api/client/es"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/client/es"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/queries"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 const (
@@ -14,7 +14,6 @@ const (
 	typeItem = "_doc"
 )
 
-//go:generate mockery  --name=ItemsPersistInterface --output ../../mocks
 type ItemsPersistInterface interface {
 	Save(it *Item) rest_errors.RestErr
 	Get(Item) (*Item, rest_errors.RestErr)

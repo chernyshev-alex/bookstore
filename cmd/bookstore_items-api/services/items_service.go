@@ -1,9 +1,9 @@
 package services
 
 import (
-	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/items"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/queries"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 type ItemsServiceInterface interface {

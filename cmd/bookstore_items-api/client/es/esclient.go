@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/chernyshev-alex/bookstore_utils_go/logger"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/olivere/elastic"
 )
 

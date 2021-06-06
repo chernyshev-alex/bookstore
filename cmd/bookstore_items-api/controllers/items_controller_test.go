@@ -10,46 +10,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/mocks"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/items"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/queries"
 	oaumocks "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
-	"github.com/chernyshev-alex/bookstore_items-api/mocks"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
-
-// type MockOAuth struct {
-// 	mock.Mock
-// }
-
-// func (m *MockOAuth) AuthenticateRequest(rq *http.Request) rest_errors.RestErr {
-// 	ret := m.Called(rq)
-// 	var r1 rest_errors.RestErr
-// 	if rf, ok := ret.Get(0).(func(*http.Request) rest_errors.RestErr); ok {
-// 		r1 = rf(rq)
-// 	} else {
-// 		if ret.Get(0) != nil {
-// 			r1 = ret.Get(0).(rest_errors.RestErr)
-// 		}
-// 	}
-// 	return r1
-// }
-
-// func (m *MockOAuth) IsPublic(rq *http.Request) bool {
-// 	args := m.Called(rq)
-// 	return args.Bool(0)
-// }
-
-// func (m *MockOAuth) GetCallerId(rq *http.Request) int64 {
-// 	args := m.Called(rq)
-// 	return int64(args.Int(0))
-// }
-// func (m *MockOAuth) GetClientId(rq *http.Request) int64 {
-// 	args := m.Called(rq)
-// 	return int64(args.Int(0))
-// }
 
 type ItemControllerSuite struct {
 	suite.Suite

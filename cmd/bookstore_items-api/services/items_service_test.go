@@ -4,19 +4,22 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
-	"github.com/chernyshev-alex/bookstore_items-api/mocks"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/items"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/queries"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/mocks"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
 
-//go:generate mockery  --name=ItemsServiceInterface --output ../mocks
+//go:generate mockery --name=ItemsServiceInterface --output ../mocks
+//go:generate mockery  --name=ItemsPersistInterface --dir=../domain/items  --output ../mocks
+//go:generate mockery  --name=esClientInterface --dir=../client/es  --output ../mocks
+
 type ItemServiceSuite struct {
 	suite.Suite
-	itemsService ItemsServiceInterface
+	itemsService mocks.ItemsServiceInterface
 	daoItemsMock mocks.ItemsPersistInterface
 }
 
