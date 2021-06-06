@@ -11,13 +11,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
-//go:generate mockery  --name=OAuthInterface --output ../mocks
-//go:generate mockery  --name=HTTPClientInterface --output ../mocks
+//go:generate mockery  --all --output ../mocks
 
 type MockHttpClient struct {
 	getFn func(url string) (resp *http.Response, err error)

@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/items"
-	"github.com/chernyshev-alex/bookstore_items-api/domain/queries"
-	"github.com/chernyshev-alex/bookstore_items-api/services"
-	"github.com/chernyshev-alex/bookstore_items-api/utils/http_utils"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/items"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/queries"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/services"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gorilla/mux"
 )
 
@@ -42,19 +41,19 @@ func (c *itemController) Ping(w http.ResponseWriter, rq *http.Request) {
 
 func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
 	if err := c.oauthService.AuthenticateRequest(rq); err != nil {
-		http_utils.ResponseError(w, err)
+		rest_errors.ResponseError(w, err)
 		return
 	}
 
 	callerId := c.oauthService.GetCallerId(rq)
 	if callerId == 0 {
-		http_utils.ResponseError(w, rest_errors.NewAuthorizationError("no user info in the token"))
+		rest_errors.ResponseError(w, rest_errors.NewAuthorizationError("no user info in the token"))
 		return
 	}
 
 	buf, err := ioutil.ReadAll(rq.Body)
 	if err != nil {
-		http_utils.ResponseError(w, rest_errors.NewBadRequestError(err.Error()))
+		rest_errors.ResponseError(w, rest_errors.NewBadRequestError(err.Error()))
 	}
 
 	defer rq.Body.Close()
@@ -62,16 +61,16 @@ func (c *itemController) Create(w http.ResponseWriter, rq *http.Request) {
 	var item items.Item
 	err = json.Unmarshal(buf, &item)
 	if err != nil {
-		http_utils.ResponseError(w, rest_errors.NewBadRequestError(err.Error()))
+		rest_errors.ResponseError(w, rest_errors.NewBadRequestError(err.Error()))
 	}
 
 	item.Seller = callerId
 	result, createErr := c.itemsService.Create(item)
 	if createErr != nil {
-		http_utils.ResponseError(w, createErr)
+		rest_errors.ResponseError(w, createErr)
 		return
 	}
-	http_utils.ResponseJson(w, http.StatusCreated, result)
+	rest_errors.ResponseJson(w, http.StatusCreated, result)
 }
 
 func (c *itemController) Get(w http.ResponseWriter, rq *http.Request) {
@@ -82,16 +81,16 @@ func (c *itemController) Get(w http.ResponseWriter, rq *http.Request) {
 
 	item, err := c.itemsService.Get(itemId.(string))
 	if err != nil {
-		http_utils.ResponseError(w, err)
+		rest_errors.ResponseError(w, err)
 		return
 	}
-	http_utils.ResponseJson(w, http.StatusOK, item)
+	rest_errors.ResponseJson(w, http.StatusOK, item)
 }
 
 func (c *itemController) Search(w http.ResponseWriter, rq *http.Request) {
 	b, err := ioutil.ReadAll(rq.Body)
 	if err != nil {
-		http_utils.ResponseError(w, rest_errors.NewBadRequestError("bad json body"))
+		rest_errors.ResponseError(w, rest_errors.NewBadRequestError("bad json body"))
 		return
 	}
 	defer rq.Body.Close()
@@ -99,15 +98,15 @@ func (c *itemController) Search(w http.ResponseWriter, rq *http.Request) {
 	var q queries.EsQuery
 	if err := json.Unmarshal(b, &q); err != nil {
 		apiErr := rest_errors.NewBadRequestError("bad query")
-		http_utils.ResponseError(w, apiErr)
+		rest_errors.ResponseError(w, apiErr)
 		return
 	}
 
 	items, searchErr := c.itemsService.Search(q)
 	if searchErr != nil {
-		http_utils.ResponseError(w, searchErr)
+		rest_errors.ResponseError(w, searchErr)
 		return
 	}
 
-	http_utils.ResponseJson(w, http.StatusOK, items)
+	rest_errors.ResponseJson(w, http.StatusOK, items)
 }

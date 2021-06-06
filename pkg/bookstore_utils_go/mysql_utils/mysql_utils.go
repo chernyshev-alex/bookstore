@@ -3,8 +3,8 @@ package mysql_utils
 import (
 	"strings"
 
-	"github.com/chernyshev-alex/bookstore_utils_go/logger"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/go-sql-driver/mysql"
 )
 

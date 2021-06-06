@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chernyshev-alex/bookstore_items-api/client/es"
-	"github.com/chernyshev-alex/bookstore_items-api/config"
-	"github.com/chernyshev-alex/bookstore_items-api/controllers"
-
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/client/es"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/controllers"
 	"github.com/gorilla/mux"
 )
 

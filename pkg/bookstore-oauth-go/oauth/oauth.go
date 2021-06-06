@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 const (
@@ -37,11 +37,6 @@ type OAuthClient struct {
 	baseURL    string
 	httpClient HttpClientInterface
 }
-
-// type HttpConfigClient struct {
-// 	httpClient HttpClientInterface
-// 	baseURL    string
-// }
 
 func ProvideOAuthClient(httpClient HttpClientInterface, baseURL string) *OAuthClient {
 	return &OAuthClient{httpClient: httpClient, baseURL: baseURL}

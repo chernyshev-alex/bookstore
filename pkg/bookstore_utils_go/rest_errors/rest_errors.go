@@ -1,6 +1,7 @@
 package rest_errors
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -75,4 +76,14 @@ func NewInternalServerError(msg string, err error) RestErr {
 		FError:   "internal server error",
 		FCauses:  []interface{}{err},
 	}
+}
+
+func ResponseJson(w http.ResponseWriter, httpStatus int, body interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpStatus)
+	json.NewEncoder(w).Encode(body)
+}
+
+func ResponseError(w http.ResponseWriter, err RestErr) {
+	ResponseJson(w, err.Status(), err)
 }
