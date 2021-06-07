@@ -19,7 +19,7 @@ import (
 
 type ItemServiceSuite struct {
 	suite.Suite
-	itemsService mocks.ItemsServiceInterface
+	itemsService ItemsServiceInterface
 	daoItemsMock mocks.ItemsPersistInterface
 }
 

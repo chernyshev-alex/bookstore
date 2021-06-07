@@ -35,7 +35,7 @@ func (p *persist) Save(it *Item) rest_errors.RestErr {
 	return nil
 }
 
-func (p persist) Get(it Item) (*Item, rest_errors.RestErr) {
+func (p *persist) Get(it Item) (*Item, rest_errors.RestErr) {
 	result, err := es.Client.Get(itemName, typeItem, it.Id)
 	if err != nil {
 		return nil, rest_errors.NewInternalServerError("save item error", err)
@@ -45,7 +45,7 @@ func (p persist) Get(it Item) (*Item, rest_errors.RestErr) {
 	return &it, nil
 }
 
-func (p persist) Search(q queries.EsQuery) ([]Item, rest_errors.RestErr) {
+func (p *persist) Search(q queries.EsQuery) ([]Item, rest_errors.RestErr) {
 	result, err := es.Client.Search(itemName, q.Build())
 	if err != nil {
 		return nil, rest_errors.NewInternalServerError("save item error", errors.New("ELK error"))

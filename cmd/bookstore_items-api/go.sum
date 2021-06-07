@@ -2,8 +2,12 @@ github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go v0.0.0-20210605204745-437f23e42f72 h1:/1vUXvJpqywpKoKq6MQqq8GzMSb8Y5zY+qL3l+lG3bE=
 github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go v0.0.0-20210605204745-437f23e42f72/go.mod h1:oXeeP1Au/0iqN/jJzZPKC2z551Bays4ajEc4L6lKfRk=
+github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go v0.0.0-20210606234426-b78a07a69a54 h1:lB6fMprLJcudjdQdX3qLa3TTpQNOpFfm+Kq3kHwrJUY=
+github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go v0.0.0-20210606234426-b78a07a69a54/go.mod h1:owkbG2O4f9fbw/FNC/EwwRbhYTJibvjPyqHWX2+VAwE=
 github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210605204745-437f23e42f72 h1:NnWvC+pmM9GBxZLRmcV7H98JIDWJd39MaMoi9fuMsQ0=
 github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210605204745-437f23e42f72/go.mod h1:0xa92oYCFIGwcDQpAT55JuTJFuvC9MpvkILdanf3f2w=
+github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210606234426-b78a07a69a54 h1:LSNOFOpSWKh6mNcNZXamyz5Uje03rg2AxIt380BF8qM=
+github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210606234426-b78a07a69a54/go.mod h1:Kdq5N4wwhXPllvD9ZbKvPEyHMgbOHxa4VkQQ609aCbQ=
 github.com/chernyshev-alex/bookstore_utils_go v1.0.2 h1:id3UJnjnjFyiK3xMuG7ll6rSCCgoTS3KFyRxYKKn1Jk=
 github.com/chernyshev-alex/bookstore_utils_go v1.0.2/go.mod h1:X6oHPvYwLvfoLmLWCYLIaBNK81Xsjzz/eGecdrWa2x0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -69,6 +73,7 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/errgo.v2 v2.1.0/go.mod h1:hNsd1EY+bozCKY1Ytp96fpM3vjJbqLJn88ws8XvfDNI=
 gopkg.in/yaml.v2 v2.2.2 h1:ZCJp+EgiOT7lHqUV2J862kp8Qj64Jo6az82+3Td9dZw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b h1:h8qDotaEPuJATrMmW04NCwg7v22aHH28wwpauUhK9Oo=

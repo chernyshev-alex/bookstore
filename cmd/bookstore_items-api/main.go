@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/config"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
