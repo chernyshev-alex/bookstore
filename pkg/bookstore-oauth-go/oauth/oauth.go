@@ -38,7 +38,7 @@ type OAuthClient struct {
 	httpClient HttpClientInterface
 }
 
-func ProvideOAuthClient(httpClient HttpClientInterface, baseURL string) *OAuthClient {
+func NewAuthClient(httpClient HttpClientInterface, baseURL string) *OAuthClient {
 	return &OAuthClient{httpClient: httpClient, baseURL: baseURL}
 }
 
