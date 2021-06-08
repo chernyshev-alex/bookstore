@@ -1,5 +1,7 @@
 elastic:
   URL: http://127.0.0.1:9200
+oauth: 
+  URL: http://127.0.0.1:8082
 server:
   host: http://127.0.0.1
   port: 8081

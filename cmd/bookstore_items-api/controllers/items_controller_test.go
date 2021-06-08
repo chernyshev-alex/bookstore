@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/items"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/domain/queries"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/mocks"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/items"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/domain/queries"
 	oaumocks "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"

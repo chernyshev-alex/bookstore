@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/client/es"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/config"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items_api/controllers"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/client/es"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_items-api/controllers"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/gorilla/mux"
 )
 
@@ -17,13 +18,18 @@ type Application struct {
 	items  controllers.ItemControllerInterface
 }
 
-func NewApp(appConfig *config.Config,
+func NewApp(appConf *config.Config,
 	itemsController controllers.ItemControllerInterface) *Application {
 	return &Application{
-		config: appConfig,
+		config: appConf,
 		router: mux.NewRouter(),
 		items:  itemsController,
 	}
+}
+
+// wired OAuthClient constructor
+func ProvideOAuthClient(httpClient oauth.HttpClientInterface, appConf *config.Config) *oauth.OAuthClient {
+	return oauth.NewAuthClient(httpClient, appConf.OAuth.URL)
 }
 
 func (app *Application) StartApp() {
