@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chernyshev-alex/bookstore_users-api/config"
-	"github.com/chernyshev-alex/bookstore_users-api/datasources/mysql/users_db"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/datasources/mysql/users_db"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -15,7 +15,6 @@ type Args struct {
 }
 
 func ProcessArgs(conf config.Config) Args {
-
 	var args Args
 
 	flags := flag.NewFlagSet("bookstore users api", 1)
@@ -33,7 +32,6 @@ func ProcessArgs(conf config.Config) Args {
 }
 
 func main() {
-
 	args := ProcessArgs(config.Config{})
 	conf, err := config.LoadCondigFromFile(args.ConfigPath)
 

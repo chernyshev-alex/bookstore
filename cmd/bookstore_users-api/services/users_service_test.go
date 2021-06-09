@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore_users-api/domain/users"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 )
 

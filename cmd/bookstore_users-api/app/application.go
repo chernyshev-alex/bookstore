@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/chernyshev-alex/bookstore_users-api/config"
-	"github.com/chernyshev-alex/bookstore_users-api/controllers/ping"
-	"github.com/chernyshev-alex/bookstore_users-api/controllers/users"
-	"github.com/chernyshev-alex/bookstore_utils_go/logger"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers/ping"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers/users"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/gin-gonic/gin"
 )
 

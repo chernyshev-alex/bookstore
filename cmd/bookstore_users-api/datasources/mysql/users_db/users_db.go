@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/chernyshev-alex/bookstore_users-api/config"
-	"github.com/chernyshev-alex/bookstore_utils_go/logger"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -21,8 +21,6 @@ func MakeMySQLConfig(cfg config.Config) mysql.Config {
 }
 
 func ProvideSqlClient(dbconf mysql.Config) *sql.DB {
-	// dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",
-	// 	username, password, host, schema)
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",
 		dbconf.User, dbconf.Passwd, dbconf.Addr, dbconf.DBName)
 

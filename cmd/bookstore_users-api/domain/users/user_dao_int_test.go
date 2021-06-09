@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore_users-api/config"
-	"github.com/chernyshev-alex/bookstore_users-api/datasources/mysql/users_db"
-	"github.com/chernyshev-alex/bookstore_utils_go/date_utils"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/datasources/mysql/users_db"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/date_utils"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/stretchr/testify/assert"
 )

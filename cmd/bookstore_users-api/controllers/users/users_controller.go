@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
-	"github.com/chernyshev-alex/bookstore_users-api/domain/users"
-	"github.com/chernyshev-alex/bookstore_users-api/services"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 )
 
