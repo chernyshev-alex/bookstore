@@ -8,7 +8,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
 
-	"github.com/chernyshev-alex/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore_users-api/app"
 	"github.com/chernyshev-alex/bookstore_users-api/controllers/ping"
 	"github.com/chernyshev-alex/bookstore_users-api/controllers/users"
