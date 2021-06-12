@@ -38,10 +38,10 @@ func (m userDaoMock) FindByEmailAndPsw(u *users.User) rest_errors.RestErr {
 
 // helpers
 
-func withMock(configFn func(*userDaoMock)) *UsersService {
+func withMock(configFn func(*userDaoMock)) UsersService {
 	userDaoMock := new(userDaoMock)
 	configFn(userDaoMock)
-	return ProvideUserService(userDaoMock)
+	return NewService(userDaoMock)
 }
 
 // tests
