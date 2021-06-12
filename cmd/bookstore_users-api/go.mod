@@ -11,5 +11,6 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/wire v0.5.0
 	github.com/ilyakaznacheev/cleanenv v1.2.5
+	github.com/kyleconroy/sqlc v1.8.0 // indirect
 	github.com/stretchr/testify v1.7.0
 )

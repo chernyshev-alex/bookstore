@@ -1,0 +1,13 @@
+version: "1"
+packages:
+  - name: "users"
+    path: "domain/users"
+    queries: "./sqlc/mysql-query.sql"
+    schema: "./sqlc/mysql-schema.sql"
+    engine: "mysql"
+    emit_prepared_queries: true
+    emit_interface: false
+    emit_exact_table_names: false
+    emit_empty_slices: false
+    emit_json_tags: true
+    json_tags_case_style: "camel"
