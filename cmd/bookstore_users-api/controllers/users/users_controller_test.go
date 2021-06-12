@@ -3,369 +3,278 @@ package users
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	mock_srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/mocks"
+	mock_au "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-type usersServiceMock struct {
-	createUserFn func(users.User) (*users.User, rest_errors.RestErr)
-	getUserFn    func(int64) (*users.User, rest_errors.RestErr)
-	updateUserFn func(bool, users.User) (*users.User, rest_errors.RestErr)
-	deleteUserFn func(int64) rest_errors.RestErr
-	searchUserFn func(string) (users.Users, rest_errors.RestErr)
-	loginUserFn  func(users.LoginRequest) (*users.User, rest_errors.RestErr)
+type UCServiceSuite struct {
+	suite.Suite
+	mockedUserService  *mock_srv.UsersService
+	mockedOAuthService *mock_au.OAuthInterface
+	userController     *UserController
+	ctx                *gin.Context
+	response           *httptest.ResponseRecorder
 }
 
-func (m usersServiceMock) CreateUser(u users.User) (*users.User, rest_errors.RestErr) {
-	return m.createUserFn(u)
-}
-func (m usersServiceMock) GetUser(userId int64) (*users.User, rest_errors.RestErr) {
-	return m.getUserFn(userId)
-}
-func (m usersServiceMock) UpdateUser(isPartial bool, u users.User) (*users.User, rest_errors.RestErr) {
-	return m.updateUserFn(isPartial, u)
-}
-func (m usersServiceMock) DeleteUser(userId int64) rest_errors.RestErr {
-	return m.deleteUserFn(userId)
-}
-func (m usersServiceMock) SearchUser(status string) (users.Users, rest_errors.RestErr) {
-	return m.searchUserFn(status)
-}
-func (m usersServiceMock) LoginUser(req users.LoginRequest) (*users.User, rest_errors.RestErr) {
-	return m.loginUserFn(req)
+func TestUCServiceSuite(t *testing.T) {
+	suite.Run(t, new(UCServiceSuite))
 }
 
-type oauthServiceMock struct {
-	isPublicFn            func(*http.Request) bool
-	getCallerIdFn         func(*http.Request) int64
-	getClientIdFn         func(*http.Request) int64
-	authenticateRequestFn func(*http.Request) rest_errors.RestErr
-}
+func (s *UCServiceSuite) SetupTest() {
+	s.mockedUserService = new(mock_srv.UsersService)
+	s.mockedOAuthService = new(mock_au.OAuthInterface)
+	s.userController = ProvideUserController(s.mockedUserService, s.mockedOAuthService)
 
-func (m oauthServiceMock) IsPublic(rq *http.Request) bool {
-	return m.isPublicFn(rq)
-}
-func (m oauthServiceMock) GetCallerId(rq *http.Request) int64 {
-	return m.getCallerIdFn(rq)
-}
-func (m oauthServiceMock) GetClientId(rq *http.Request) int64 {
-	return m.getClientIdFn(rq)
-}
-func (m oauthServiceMock) AuthenticateRequest(rq *http.Request) rest_errors.RestErr {
-	return m.authenticateRequestFn(rq)
+	s.response = httptest.NewRecorder()
+	s.ctx, _ = gin.CreateTestContext(s.response)
 }
 
 // tests
+//go:generate mockery  --name=UsersService --dir=../../services  --output ../../mocks
 
-func TestCreateUserOk(t *testing.T) {
-	userController := withMock(
-		func(mock *usersServiceMock) {
-			mock.createUserFn = func(u users.User) (*users.User, rest_errors.RestErr) {
-				return &u, nil
-			}
-		}, nil, nil, nil)
+func (s *UCServiceSuite) TestCreateUserOk() {
+	u := users.User{Id: 1, FirstName: "fname"}
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		jsonUser, _ := json.Marshal(users.User{Id: 1, FirstName: "fname"})
-		return httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(jsonUser)))
-	})
+	s.requestWithUserAndParams(http.MethodPost, &u, nil)
 
-	userController.Create(ctx)
-	assertStatus(t, ctx, http.StatusCreated)
+	s.mockedUserService.On("CreateUser", mock.IsType(u)).Return(&u, nil)
+	s.userController.Create(s.ctx)
+
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusCreated, s.ctx.Writer.Status())
 }
 
-func TestCreateUserBadJson(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.createUserFn = func(u users.User) (*users.User, rest_errors.RestErr) {
-			return &u, nil
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestCreateUserBadJson() {
+	s.requestWithJson(http.MethodPost, "bad json")
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		return httptest.NewRequest(http.MethodPost, "/", strings.NewReader("bad json"))
-	})
+	s.userController.Create(s.ctx)
 
-	userController.Create(ctx)
-	assertStatus(t, ctx, http.StatusBadRequest)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusBadRequest, s.ctx.Writer.Status())
 }
 
-func TestCreateUserFailed(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.createUserFn = func(u users.User) (*users.User, rest_errors.RestErr) {
-			return nil, rest_errors.NewInternalServerError("err", errors.New("db error"))
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestCreateUserServiceFailed() {
+	u := users.User{Id: 1, FirstName: "fname"}
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		jsonUser, _ := json.Marshal(users.User{Id: 1, FirstName: "fname"})
-		return httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(jsonUser)))
-	})
+	s.requestWithUserAndParams(http.MethodPost, &u, nil)
 
-	userController.Create(ctx)
-	assertStatus(t, ctx, http.StatusInternalServerError)
+	s.mockedUserService.On("CreateUser", mock.IsType(u)).Return(nil,
+		rest_errors.NewInternalServerError("err", errors.New("db error")))
+
+	s.userController.Create(s.ctx)
+
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusInternalServerError, s.ctx.Writer.Status())
 }
 
-func TestGetUserOk(t *testing.T) {
-	userController := withMock(
-		func(mock *usersServiceMock) {
-			mock.getUserFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-				return &users.User{Id: 1, FirstName: "fname"}, nil
-			}
-		},
-		func(mock *oauthServiceMock) {
-			mock.authenticateRequestFn = func(rq *http.Request) rest_errors.RestErr {
-				return nil
-			}
-		},
-		func(mock *oauthServiceMock) {
-			mock.getCallerIdFn = func(r *http.Request) int64 {
-				return 1
-			}
-		},
-		func(mock *oauthServiceMock) {
-			mock.isPublicFn = func(r *http.Request) bool {
-				return true
-			}
-		})
+func (s *UCServiceSuite) TestGetUserOk() {
+	userId := int64(1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		return nil
-	})
+	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
+	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	userController.Get(ctx)
-	assertStatus(t, ctx, http.StatusOK)
+	u := users.User{Id: userId}
+
+	rq := s.ctx.Request
+	s.mockedUserService.On("GetUser", userId).Return(&u, nil)
+	s.mockedOAuthService.On("AuthenticateRequest", mock.IsType(rq)).Return(nil)
+	s.mockedOAuthService.On("GetCallerId", mock.IsType(rq)).Return(userId)
+	s.mockedOAuthService.On("IsPublic", mock.IsType(rq)).Return(true)
+
+	s.userController.Get(s.ctx)
+	s.mockedOAuthService.AssertExpectations(s.T())
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusOK, s.ctx.Writer.Status())
 }
 
-func TestGetUserNotAuthenticated(t *testing.T) {
-	userController := withMock(
-		nil,
-		func(mock *oauthServiceMock) {
-			mock.authenticateRequestFn = func(rq *http.Request) rest_errors.RestErr {
-				return rest_errors.NewAuthorizationError("not authenticated")
-			}
-		}, nil, nil)
+func (s *UCServiceSuite) TestGetUserNotAuthenticated() {
+	userId := int64(1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		return nil
-	})
+	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
+	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	userController.Get(ctx)
-	assertStatus(t, ctx, http.StatusUnauthorized)
+	rq := s.ctx.Request
+	s.mockedOAuthService.On("AuthenticateRequest", mock.IsType(rq)).Return(rest_errors.NewAuthorizationError("not authenticated"))
+
+	s.userController.Get(s.ctx)
+	s.mockedOAuthService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusUnauthorized, s.ctx.Writer.Status())
 }
 
-func TestGetUserNotFound(t *testing.T) {
-	userController := withMock(
-		func(mock *usersServiceMock) {
-			mock.getUserFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-				return nil, rest_errors.NewNotFoundError("not found")
-			}
-		},
-		func(mock *oauthServiceMock) {
-			mock.authenticateRequestFn = func(rq *http.Request) rest_errors.RestErr {
-				return nil
-			}
-		}, nil, nil)
+func (s *UCServiceSuite) TestGetUserNotFound() {
+	userId := int64(-1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "-1"}}
-		return nil
-	})
+	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
+	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	userController.Get(ctx)
-	assertStatus(t, ctx, http.StatusNotFound)
+	rq := s.ctx.Request
+	s.mockedUserService.On("GetUser", userId).Return(nil, rest_errors.NewNotFoundError("not found"))
+	s.mockedOAuthService.On("AuthenticateRequest", mock.IsType(rq)).Return(nil)
+
+	s.userController.Get(s.ctx)
+
+	s.mockedOAuthService.AssertExpectations(s.T())
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusNotFound, s.ctx.Writer.Status())
 }
 
-func TestUpdateUserOk(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.updateUserFn = func(isPublic bool, u users.User) (*users.User, rest_errors.RestErr) {
-			u.FirstName = "updated"
-			return &u, nil
-		}
-		mock.getUserFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-			return &users.User{Id: userId, FirstName: "change_me"}, nil
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestUpdateUserOk() {
+	u := users.User{Id: 1, FirstName: "update_me"}
+	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
-	ctx, response := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		bytes, _ := json.Marshal(users.User{Id: 1, FirstName: "update_me"})
-		return httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(string(bytes)))
-	})
+	s.requestWithUserAndParams(http.MethodPatch, &u, p)
 
-	userController.Update(ctx)
+	s.mockedUserService.On("UpdateUser", true, u).Return(func(bool, users.User) *users.User {
+		return &users.User{Id: 1, FirstName: "changed"}
+	}, nil)
 
-	var u users.User
-	if err := json.Unmarshal(response.Body.Bytes(), &u); err != nil {
-		t.Error("invalid body response", response.Body)
+	s.userController.Update(s.ctx)
+
+	if err := json.Unmarshal(s.response.Body.Bytes(), &u); err != nil {
+		s.T().Error("bad body response", s.response.Body)
 	}
 
-	fmt.Println("sdsds", response.Body)
-	if u.FirstName != "updated" {
-		t.Error("not expected", u.FirstName)
-	}
+	s.mockedUserService.AssertExpectations(s.T())
 
-	assertStatus(t, ctx, http.StatusOK+1)
+	assert.EqualValues(s.T(), "changed", u.FirstName)
+	assert.EqualValues(s.T(), http.StatusOK, s.ctx.Writer.Status())
 }
 
-func TestUpdateUserFailed(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.updateUserFn = func(isPublic bool, u users.User) (*users.User, rest_errors.RestErr) {
-			return nil, rest_errors.NewInternalServerError("err", errors.New("db error"))
-		}
+func (s *UCServiceSuite) TestUpdateUserFailed() {
+	u := users.User{Id: 1, FirstName: "update_me"}
+	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
-		mock.getUserFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-			return &users.User{Id: userId, FirstName: "change_me"}, nil
-		}
-	}, nil, nil, nil)
+	s.requestWithUserAndParams(http.MethodPatch, &u, p)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		bytes, _ := json.Marshal(users.User{Id: 1, FirstName: "update_me"})
-		return httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(string(bytes)))
-	})
+	s.mockedUserService.On("UpdateUser", true, u).Return(nil,
+		rest_errors.NewInternalServerError("err", errors.New("db error")))
 
-	userController.Update(ctx)
-	assertStatus(t, ctx, http.StatusInternalServerError)
+	s.userController.Update(s.ctx)
+
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusInternalServerError, s.ctx.Writer.Status())
 }
 
-func TestUpdateUserNotExist(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.updateUserFn = func(isPublic bool, u users.User) (*users.User, rest_errors.RestErr) {
-			return nil, rest_errors.NewNotFoundError("err")
-		}
-		mock.getUserFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-			return nil, rest_errors.NewNotFoundError("err")
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestUpdateUserNotExist() {
+	u := users.User{Id: -1}
+	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		bytes, _ := json.Marshal(users.User{Id: 1, FirstName: "update_me"})
-		return httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(string(bytes)))
-	})
+	s.requestWithUserAndParams(http.MethodPatch, &u, p)
 
-	userController.Update(ctx)
-	assertStatus(t, ctx, http.StatusNotFound)
+	s.mockedUserService.On("UpdateUser", true, u).Return(nil, rest_errors.NewNotFoundError("err"))
+
+	s.userController.Update(s.ctx)
+
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusNotFound, s.ctx.Writer.Status())
 }
 
-func TestDelUserOk(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.deleteUserFn = func(userId int64) rest_errors.RestErr {
-			return nil
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestRemoveUserOk() {
+	userId := int64(-1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		return nil
-	})
+	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
+	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	userController.Delete(ctx)
-	assertStatus(t, ctx, http.StatusOK)
+	s.mockedUserService.On("DeleteUser", userId).Return(nil)
+
+	s.userController.Delete(s.ctx)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusOK, s.ctx.Writer.Status())
 }
 
-func TestDelUserNoIdParam(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.deleteUserFn = func(userId int64) rest_errors.RestErr {
-			return nil
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestRemoveUserNoIdParam() {
+	userId := int64(-1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		return nil
-	})
+	s.requestWithUserAndParams(http.MethodGet, nil, nil)
 
-	userController.Delete(ctx)
-	assertStatus(t, ctx, http.StatusBadRequest)
+	s.mockedUserService.On("DeleteUser", userId).Return(nil)
+
+	s.userController.Delete(s.ctx)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusBadRequest, s.ctx.Writer.Status())
 }
 
-func TestDelUserServiceError(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.deleteUserFn = func(userId int64) rest_errors.RestErr {
-			return rest_errors.NewInternalServerError("err", errors.New("db error"))
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestRemoveUserServiceError() {
+	userId := int64(-1)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		c.Params = gin.Params{gin.Param{Key: "user_id", Value: "1"}}
-		return nil
-	})
+	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
+	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	userController.Delete(ctx)
-	assertStatus(t, ctx, http.StatusInternalServerError)
+	s.mockedUserService.On("DeleteUser", userId).Return(rest_errors.NewInternalServerError("err", errors.New("db error")))
+
+	s.userController.Delete(s.ctx)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusInternalServerError, s.ctx.Writer.Status())
 }
 
-func TestSearchUserOk(t *testing.T) {
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.searchUserFn = func(searchQuery string) (users.Users, rest_errors.RestErr) {
-			return []users.User{}, nil
-		}
-	}, nil, nil, nil)
+func (s *UCServiceSuite) TestSearchUserOk() {
+	s.requestWithQuery(http.MethodGet, "/?status=active")
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		return httptest.NewRequest(http.MethodPatch, "/status=active", nil)
-	})
+	var result users.Users = []users.User{}
+	s.mockedUserService.On("SearchUser", mock.AnythingOfType("string")).Return(result, nil)
 
-	userController.Search(ctx)
-	assertStatus(t, ctx, http.StatusOK)
+	s.userController.Search(s.ctx)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusOK, s.ctx.Writer.Status())
 }
 
-func TestLoginOk(t *testing.T) {
+func (s *UCServiceSuite) TestLoginOk() {
 	lr := users.LoginRequest{Email: "email", Password: "pws"}
+	s.mockedUserService.On("LoginUser", lr).Return(&users.User{}, nil)
 
-	userController := withMock(func(mock *usersServiceMock) {
-		mock.loginUserFn = func(lr users.LoginRequest) (*users.User, rest_errors.RestErr) {
-			return &users.User{Id: 1, Email: lr.Email}, nil
-		}
-	}, nil, nil, nil)
+	s.requestWithLogin(http.MethodPost, lr)
+	s.userController.Login(s.ctx)
 
-	ctx, _ := withRequest(func(c *gin.Context) *http.Request {
-		bytes, _ := json.Marshal(lr)
-		return httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(bytes)))
-	})
-	userController.Login(ctx)
-	assertStatus(t, ctx, http.StatusOK)
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusOK, s.ctx.Writer.Status())
+}
+
+func (s *UCServiceSuite) TestLoginFailed() {
+	lr := users.LoginRequest{Email: "email", Password: "pws"}
+	s.mockedUserService.On("LoginUser", lr).Return(nil, rest_errors.NewAuthorizationError("not authorized"))
+
+	s.requestWithLogin(http.MethodPost, lr)
+	s.userController.Login(s.ctx)
+
+	s.mockedUserService.AssertExpectations(s.T())
+	assert.EqualValues(s.T(), http.StatusUnauthorized, s.ctx.Writer.Status())
 }
 
 // helpers
 
-func withMock(fns ...interface{}) *UserController {
-
-	userMock := new(usersServiceMock)
-	oauthMock := new(oauthServiceMock)
-
-	for _, fn := range fns {
-		if fn != nil {
-			switch fncall := fn.(type) {
-			case func(*usersServiceMock):
-				fncall(userMock)
-			case func(*oauthServiceMock):
-				fncall(oauthMock)
-			default:
-				panic("unknown mock type")
-			}
-		}
+func (s *UCServiceSuite) requestWithUserAndParams(httpMethod string, u *users.User, params gin.Params) {
+	if params != nil {
+		s.ctx.Params = params
 	}
-	return ProvideUserController(userMock, oauthMock)
+	if u != nil {
+		jsonUser, _ := json.Marshal(u)
+		s.ctx.Request = httptest.NewRequest(httpMethod, "/", strings.NewReader(string(jsonUser)))
+	} else {
+		s.ctx.Request = httptest.NewRequest(httpMethod, "/", nil)
+	}
 }
 
-func withRequest(makeRequestFn func(*gin.Context) *http.Request) (*gin.Context, *httptest.ResponseRecorder) {
-	response := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(response)
-	ctx.Request = makeRequestFn(ctx)
-	return ctx, response
+func (s *UCServiceSuite) requestWithLogin(httpMethod string, r users.LoginRequest) {
+	js, _ := json.Marshal(r)
+	s.ctx.Request = httptest.NewRequest(httpMethod, "/", strings.NewReader(string(js)))
 }
 
-func assertStatus(t *testing.T, c *gin.Context, expectedStatus int) {
-	assert.EqualValues(t, c.Writer.Status(), expectedStatus)
+func (s *UCServiceSuite) requestWithJson(httpMethod string, rawJson string) {
+	s.ctx.Request = httptest.NewRequest(httpMethod, "/", strings.NewReader(rawJson))
+}
+
+func (s *UCServiceSuite) requestWithQuery(httpMethod string, query string) {
+	s.ctx.Request = httptest.NewRequest(httpMethod, query, nil)
 }
