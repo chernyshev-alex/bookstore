@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -114,8 +113,6 @@ func (uc UserController) Delete(c *gin.Context) {
 func (uc UserController) Search(c *gin.Context) {
 
 	status := c.Query("status")
-
-	fmt.Println("====== Search=", status)
 
 	users, err := uc.usersService.SearchUser(status)
 	if err != nil {
