@@ -51,7 +51,6 @@ func (d UserDAO) Get(id int64) (*User, rest_errors.RestErr) {
 	u := User{Id: id}
 	if getErr := stmt.QueryRow(u.Id).Scan(&u.Id, &u.FirstName, &u.LastName, &u.Email,
 		&u.DateCreated, &u.Status); getErr != nil {
-
 		logger.Error("get user", getErr)
 		if errors.Is(getErr, sql.ErrNoRows) {
 			return nil, rest_errors.NewNotFoundError("user not found")

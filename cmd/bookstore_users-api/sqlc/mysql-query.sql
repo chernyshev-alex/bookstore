@@ -1,18 +1,18 @@
 
 -- name: FindUser :one
-SELECT id, first_name,last_name,email, date_created, status FROM users WHERE id=$1;
+SELECT id, first_name,last_name,email, date_created, status FROM users WHERE id = ?;
 
--- name: InsertUser :exec
-INSERT INTO users (first_name,last_name,email,date_created, status, password) VALUES ($1, $2, $3, $4, $5, $6);
+-- name: InsertUser :execresult
+INSERT INTO users (first_name,last_name,email,date_created, status, password) VALUES (?, ?, ?, ?, ?, ?);
 
--- name: UpdateUser :exec
-UPDATE users SET first_name=$2,last_name=$3,email=$4 WHERE id = $1;
+-- name: UpdateUser :execresult
+UPDATE users SET first_name=?,last_name=?,email=? WHERE id = ?;
 
--- name: DeleteUser :exec
-DELETE FROM users WHERE id=$1;
+-- name: DeleteUser :execresult
+DELETE FROM users WHERE id=?;
 
 -- name: FindByStatus :many
-SELECT id, first_name,last_name,email,date_created, status FROM users WHERE status=$1;
+SELECT id, first_name,last_name,email,date_created, status FROM users WHERE status=?;
 
--- name: FindByEMailAndPsw :many
-SELECT id, first_name,last_name,email,date_created, status FROM users WHERE email=$1 and password=$2 and status=$3;
+-- name: FindByEMailAndPsw :one
+SELECT id, first_name,last_name,email,date_created, status FROM users WHERE email=? and password=? and status=?;
