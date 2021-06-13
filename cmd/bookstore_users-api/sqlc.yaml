@@ -1,7 +1,7 @@
 version: "1"
 packages:
-  - name: "user_dao"
-    path: "sqlc/user_dao"
+  - name: "gen"
+    path: "sqlc/dao/users/gen"
     queries: "./sqlc/mysql-query.sql"
     schema: "./sqlc/mysql-schema.sql"
     engine: "mysql"

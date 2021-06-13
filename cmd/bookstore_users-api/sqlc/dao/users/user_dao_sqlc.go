@@ -5,19 +5,28 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/sqlc/user_dao"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/sqlc/dao/users/gen"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type UserDao struct {
+type IUserDao interface {
+	Get(id int32) (*users.User, rest_errors.RestErr)
+	Save(u *users.User) rest_errors.RestErr
+	Update(u *users.User) rest_errors.RestErr
+	Delete(u *users.User) rest_errors.RestErr
+	FindByStatus(status string) ([]users.User, rest_errors.RestErr)
+	FindByEmailAndPsw(u *users.User) rest_errors.RestErr
+}
+type userDao struct {
 	SqlClient *sql.DB
-	dbq       *user_dao.Queries
+	dbq       *gen.Queries
 }
 
-func NewUsersDao(client *sql.DB) *UserDao {
-	return &UserDao{SqlClient: client,
-		dbq: user_dao.New(client),
+func NewUserDao(client *sql.DB) IUserDao {
+	return &userDao{SqlClient: client,
+		dbq: gen.New(client),
 	}
 }
 
@@ -25,14 +34,14 @@ func asNullStr(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-func (d *UserDao) Get(id int64) (*User, rest_errors.RestErr) {
-	result, err := d.dbq.FindUser(context.Background(), int32(id))
+func (d *userDao) Get(id int32) (*users.User, rest_errors.RestErr) {
+	result, err := d.dbq.FindUser(context.Background(), id)
 	if err != nil {
 		logger.Error("get user", err)
 		return nil, rest_errors.NewInternalServerError("db error", err)
 	}
 
-	u := User{
+	u := users.User{
 		Id:          int64(result.ID),
 		FirstName:   result.FirstName.String,
 		LastName:    result.LastName.String,
@@ -43,8 +52,8 @@ func (d *UserDao) Get(id int64) (*User, rest_errors.RestErr) {
 	return &u, nil
 }
 
-func (d *UserDao) Save(u *User) rest_errors.RestErr {
-	args := user_dao.InsertUserParams{
+func (d *userDao) Save(u *users.User) rest_errors.RestErr {
+	args := gen.InsertUserParams{
 		FirstName:   asNullStr(u.FirstName),
 		LastName:    asNullStr(u.LastName),
 		Email:       u.Email,
@@ -68,21 +77,22 @@ func (d *UserDao) Save(u *User) rest_errors.RestErr {
 	return nil
 }
 
-func (d *UserDao) Update(u *User) rest_errors.RestErr {
-	args := user_dao.UpdateUserParams{
+func (d *userDao) Update(u *users.User) rest_errors.RestErr {
+	args := gen.UpdateUserParams{
+		ID:        int32(u.Id),
 		FirstName: asNullStr(u.FirstName),
 		LastName:  asNullStr(u.LastName),
 		Email:     u.Email,
 	}
 	_, err := d.dbq.UpdateUser(context.Background(), args)
 	if err != nil {
-		logger.Error("get user", err)
+		logger.Error("update user", err)
 		return rest_errors.NewInternalServerError("db error", err)
 	}
 	return nil
 }
 
-func (d *UserDao) Delete(u *User) rest_errors.RestErr {
+func (d *userDao) Delete(u *users.User) rest_errors.RestErr {
 	result, err := d.dbq.DeleteUser(context.Background(), int32(u.Id))
 	if err != nil {
 		logger.Error("delete user", err)
@@ -91,23 +101,25 @@ func (d *UserDao) Delete(u *User) rest_errors.RestErr {
 	rows, err := result.RowsAffected()
 	if err != nil {
 		logger.Error("RowsAffected", err)
+		return rest_errors.NewInternalServerError("get rows affected failed", err)
 	}
 	if rows == 0 {
 		logger.Info("no row to delete")
+		return rest_errors.NewNotFoundError(u.Email)
 	}
 	return nil
 }
 
-func (d *UserDao) FindByStatus(status string) ([]User, rest_errors.RestErr) {
+func (d *userDao) FindByStatus(status string) ([]users.User, rest_errors.RestErr) {
 	result, err := d.dbq.FindByStatus(context.Background(), asNullStr(status))
 	if err != nil {
 		logger.Error("FindByStatus", err)
 		return nil, rest_errors.NewInternalServerError("db error", err)
 	}
 
-	ls := make([]User, 0, len(result))
+	ls := make([]users.User, 0, len(result))
 	for _, rec := range result {
-		u := User{
+		u := users.User{
 			Id:        int64(rec.ID),
 			FirstName: rec.FirstName.String,
 			LastName:  rec.LastName.String,
@@ -120,12 +132,12 @@ func (d *UserDao) FindByStatus(status string) ([]User, rest_errors.RestErr) {
 	return ls, nil
 }
 
-func (d *UserDao) FindByEmailAndPsw(u *User) rest_errors.RestErr {
+func (d *userDao) FindByEmailAndPsw(u *users.User) rest_errors.RestErr {
 	if u == nil {
 		logger.Error("FindByEmailAndPsw not expected null", nil)
 		return rest_errors.NewBadRequestError("bad input")
 	}
-	args := user_dao.FindByEMailAndPswParams{
+	args := gen.FindByEMailAndPswParams{
 		Email:    u.Email,
 		Password: asNullStr(u.Password),
 		Status:   asNullStr(u.Status),
