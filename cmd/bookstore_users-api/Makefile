@@ -4,8 +4,8 @@ test:
 	go test ./...
 
 dao-test:
-	export CONFIG=`pwd`/config/config.yml
-	go test  -run  ^TestMain$  github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/sqlc/dao/users
+	export CONFIG=`pwd`/config/config.yml;  \
+	go test  -timeout 30s -run ^TestDaoSQLC$  github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/sqlc/dao/users
 
 start:
 	docker-compose up -d

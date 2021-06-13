@@ -32,6 +32,7 @@ func TestMain(m *testing.M) {
 
 func setupTest() {
 	var conf config.Config
+
 	configFile, _ := filepath.Abs(os.Getenv(ENV_CONFIG_VAR))
 	if err := cleanenv.ReadConfig(configFile, &conf); err != nil {
 		panic(err)
