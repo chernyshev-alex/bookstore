@@ -1,4 +1,4 @@
-package users
+package controllers
 
 import (
 	"encoding/json"
@@ -9,9 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	c "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
 	mock_srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/mocks"
-	mock_au "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
+	mock_oa "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,8 +23,8 @@ import (
 type UCServiceSuite struct {
 	suite.Suite
 	mockedUserService  *mock_srv.UsersService
-	mockedOAuthService *mock_au.OAuthInterface
-	userController     *UserController
+	mockedOAuthService *mock_oa.OAuthInterface
+	userController     *c.UserController // TODO intf
 	ctx                *gin.Context
 	response           *httptest.ResponseRecorder
 }
@@ -34,8 +35,8 @@ func TestUCServiceSuite(t *testing.T) {
 
 func (s *UCServiceSuite) SetupTest() {
 	s.mockedUserService = new(mock_srv.UsersService)
-	s.mockedOAuthService = new(mock_au.OAuthInterface)
-	s.userController = ProvideUserController(s.mockedUserService, s.mockedOAuthService)
+	s.mockedOAuthService = new(mock_oa.OAuthInterface)
+	s.userController = c.ProvideUserController(s.mockedUserService, s.mockedOAuthService)
 
 	s.response = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.response)
@@ -45,7 +46,7 @@ func (s *UCServiceSuite) SetupTest() {
 //go:generate mockery  --name=UsersService --dir=../../services  --output ../../mocks
 
 func (s *UCServiceSuite) TestCreateUserOk() {
-	u := users.User{Id: 1, FirstName: "fname"}
+	u := models.User{Id: 1, FirstName: "fname"}
 
 	s.requestWithUserAndParams(http.MethodPost, &u, nil)
 
@@ -66,7 +67,7 @@ func (s *UCServiceSuite) TestCreateUserBadJson() {
 }
 
 func (s *UCServiceSuite) TestCreateUserServiceFailed() {
-	u := users.User{Id: 1, FirstName: "fname"}
+	u := models.User{Id: 1, FirstName: "fname"}
 
 	s.requestWithUserAndParams(http.MethodPost, &u, nil)
 
@@ -85,7 +86,7 @@ func (s *UCServiceSuite) TestGetUserOk() {
 	params := gin.Param{Key: "user_id", Value: strconv.FormatInt(userId, 10)}
 	s.requestWithUserAndParams(http.MethodGet, nil, gin.Params{params})
 
-	u := users.User{Id: userId}
+	u := models.User{Id: userId}
 
 	rq := s.ctx.Request
 	s.mockedUserService.On("GetUser", userId).Return(&u, nil)
@@ -131,13 +132,13 @@ func (s *UCServiceSuite) TestGetUserNotFound() {
 }
 
 func (s *UCServiceSuite) TestUpdateUserOk() {
-	u := users.User{Id: 1, FirstName: "update_me"}
+	u := models.User{Id: 1, FirstName: "update_me"}
 	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
 	s.requestWithUserAndParams(http.MethodPatch, &u, p)
 
-	s.mockedUserService.On("UpdateUser", true, u).Return(func(bool, users.User) *users.User {
-		return &users.User{Id: 1, FirstName: "changed"}
+	s.mockedUserService.On("UpdateUser", true, u).Return(func(bool, models.User) *models.User {
+		return &models.User{Id: 1, FirstName: "changed"}
 	}, nil)
 
 	s.userController.Update(s.ctx)
@@ -153,7 +154,7 @@ func (s *UCServiceSuite) TestUpdateUserOk() {
 }
 
 func (s *UCServiceSuite) TestUpdateUserFailed() {
-	u := users.User{Id: 1, FirstName: "update_me"}
+	u := models.User{Id: 1, FirstName: "update_me"}
 	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
 	s.requestWithUserAndParams(http.MethodPatch, &u, p)
@@ -168,7 +169,7 @@ func (s *UCServiceSuite) TestUpdateUserFailed() {
 }
 
 func (s *UCServiceSuite) TestUpdateUserNotExist() {
-	u := users.User{Id: -1}
+	u := models.User{Id: -1}
 	p := gin.Params{gin.Param{Key: "user_id", Value: strconv.FormatInt(u.Id, 10)}}
 
 	s.requestWithUserAndParams(http.MethodPatch, &u, p)
@@ -222,7 +223,7 @@ func (s *UCServiceSuite) TestRemoveUserServiceError() {
 func (s *UCServiceSuite) TestSearchUserOk() {
 	s.requestWithQuery(http.MethodGet, "/?status=active")
 
-	var result users.Users = []users.User{}
+	var result models.Users = []models.User{}
 	s.mockedUserService.On("SearchUser", mock.AnythingOfType("string")).Return(result, nil)
 
 	s.userController.Search(s.ctx)
@@ -231,8 +232,8 @@ func (s *UCServiceSuite) TestSearchUserOk() {
 }
 
 func (s *UCServiceSuite) TestLoginOk() {
-	lr := users.LoginRequest{Email: "email", Password: "pws"}
-	s.mockedUserService.On("LoginUser", lr).Return(&users.User{}, nil)
+	lr := models.LoginRequest{Email: "email", Password: "pws"}
+	s.mockedUserService.On("LoginUser", lr).Return(&models.User{}, nil)
 
 	s.requestWithLogin(http.MethodPost, lr)
 	s.userController.Login(s.ctx)
@@ -242,7 +243,7 @@ func (s *UCServiceSuite) TestLoginOk() {
 }
 
 func (s *UCServiceSuite) TestLoginFailed() {
-	lr := users.LoginRequest{Email: "email", Password: "pws"}
+	lr := models.LoginRequest{Email: "email", Password: "pws"}
 	s.mockedUserService.On("LoginUser", lr).Return(nil, rest_errors.NewAuthorizationError("not authorized"))
 
 	s.requestWithLogin(http.MethodPost, lr)
@@ -254,7 +255,7 @@ func (s *UCServiceSuite) TestLoginFailed() {
 
 // helpers
 
-func (s *UCServiceSuite) requestWithUserAndParams(httpMethod string, u *users.User, params gin.Params) {
+func (s *UCServiceSuite) requestWithUserAndParams(httpMethod string, u *models.User, params gin.Params) {
 	if params != nil {
 		s.ctx.Params = params
 	}
@@ -266,7 +267,7 @@ func (s *UCServiceSuite) requestWithUserAndParams(httpMethod string, u *users.Us
 	}
 }
 
-func (s *UCServiceSuite) requestWithLogin(httpMethod string, r users.LoginRequest) {
+func (s *UCServiceSuite) requestWithLogin(httpMethod string, r models.LoginRequest) {
 	js, _ := json.Marshal(r)
 	s.ctx.Request = httptest.NewRequest(httpMethod, "/", strings.NewReader(string(js)))
 }

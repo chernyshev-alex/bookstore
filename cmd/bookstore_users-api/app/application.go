@@ -1,28 +1,32 @@
 package app
 
 import (
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers/ping"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers/users"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
+	c "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type Application struct {
 	router         *gin.Engine
-	pingController *ping.PingController
-	userController *users.UserController
-	appConfig      *config.Config
+	pingController *c.PingController
+	userController *c.UserController
+	appConfig      *conf.Config
 }
 
-func ProvideApp(appConfig *config.Config, pingController *ping.PingController,
-	userController *users.UserController) Application {
+func ProvideApp(appConfig *conf.Config, pingController *c.PingController,
+	userController *c.UserController) Application {
 	return Application{
 		router:         gin.Default(),
 		pingController: pingController,
 		userController: userController,
 		appConfig:      appConfig,
 	}
+}
+
+func NewOAuthClient(httpClient oauth.HttpClientInterface, appConf *conf.Config) *oauth.OAuthClient {
+	return oauth.NewAuthClient(httpClient, appConf.OAuth.URL)
 }
 
 func (app *Application) mapUrls() {

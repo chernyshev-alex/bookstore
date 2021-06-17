@@ -1,13 +1,13 @@
 version: "1"
 packages:
   - name: "gen"
-    path: "sqlc/dao/users/gen"
-    queries: "./sqlc/mysql-query.sql"
-    schema: "./sqlc/mysql-schema.sql"
+    path: "dao/mysql/gen"
+    queries: "sql/mysql-query.sql"
+    schema: "sql/mysql-schema.sql"
     engine: "mysql"
     emit_prepared_queries: true
     emit_interface: false
     emit_exact_table_names: false
     emit_empty_slices: false
-    emit_json_tags: true
+    emit_json_tags: false
     json_tags_case_style: "camel"

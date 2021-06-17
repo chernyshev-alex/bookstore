@@ -22,18 +22,18 @@ SELECT id, first_name,last_name,email,date_created, status FROM users WHERE emai
 `
 
 type FindByEMailAndPswParams struct {
-	Email    string         `json:"email"`
-	Password sql.NullString `json:"password"`
-	Status   sql.NullString `json:"status"`
+	Email    string
+	Password sql.NullString
+	Status   sql.NullString
 }
 
 type FindByEMailAndPswRow struct {
-	ID          int32          `json:"id"`
-	FirstName   sql.NullString `json:"firstName"`
-	LastName    sql.NullString `json:"lastName"`
-	Email       string         `json:"email"`
-	DateCreated time.Time      `json:"dateCreated"`
-	Status      sql.NullString `json:"status"`
+	ID          int32
+	FirstName   sql.NullString
+	LastName    sql.NullString
+	Email       string
+	DateCreated time.Time
+	Status      sql.NullString
 }
 
 func (q *Queries) FindByEMailAndPsw(ctx context.Context, arg FindByEMailAndPswParams) (FindByEMailAndPswRow, error) {
@@ -55,12 +55,12 @@ SELECT id, first_name,last_name,email,date_created, status FROM users WHERE stat
 `
 
 type FindByStatusRow struct {
-	ID          int32          `json:"id"`
-	FirstName   sql.NullString `json:"firstName"`
-	LastName    sql.NullString `json:"lastName"`
-	Email       string         `json:"email"`
-	DateCreated time.Time      `json:"dateCreated"`
-	Status      sql.NullString `json:"status"`
+	ID          int32
+	FirstName   sql.NullString
+	LastName    sql.NullString
+	Email       string
+	DateCreated time.Time
+	Status      sql.NullString
 }
 
 func (q *Queries) FindByStatus(ctx context.Context, status sql.NullString) ([]FindByStatusRow, error) {
@@ -98,12 +98,12 @@ SELECT id, first_name,last_name,email, date_created, status FROM users WHERE id 
 `
 
 type FindUserRow struct {
-	ID          int32          `json:"id"`
-	FirstName   sql.NullString `json:"firstName"`
-	LastName    sql.NullString `json:"lastName"`
-	Email       string         `json:"email"`
-	DateCreated time.Time      `json:"dateCreated"`
-	Status      sql.NullString `json:"status"`
+	ID          int32
+	FirstName   sql.NullString
+	LastName    sql.NullString
+	Email       string
+	DateCreated time.Time
+	Status      sql.NullString
 }
 
 func (q *Queries) FindUser(ctx context.Context, id int32) (FindUserRow, error) {
@@ -125,12 +125,12 @@ INSERT INTO users (first_name,last_name,email,date_created, status, password) VA
 `
 
 type InsertUserParams struct {
-	FirstName   sql.NullString `json:"firstName"`
-	LastName    sql.NullString `json:"lastName"`
-	Email       string         `json:"email"`
-	DateCreated time.Time      `json:"dateCreated"`
-	Status      sql.NullString `json:"status"`
-	Password    sql.NullString `json:"password"`
+	FirstName   sql.NullString
+	LastName    sql.NullString
+	Email       string
+	DateCreated time.Time
+	Status      sql.NullString
+	Password    sql.NullString
 }
 
 func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (sql.Result, error) {
@@ -149,10 +149,10 @@ UPDATE users SET first_name=?,last_name=?,email=? WHERE id = ?
 `
 
 type UpdateUserParams struct {
-	FirstName sql.NullString `json:"firstName"`
-	LastName  sql.NullString `json:"lastName"`
-	Email     string         `json:"email"`
-	ID        int32          `json:"id"`
+	FirstName sql.NullString
+	LastName  sql.NullString
+	Email     string
+	ID        int32
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (sql.Result, error) {

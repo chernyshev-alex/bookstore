@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/datasources/mysql/users_db"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -14,11 +12,11 @@ type Args struct {
 	ConfigPath string
 }
 
-func ProcessArgs(conf config.Config) Args {
+func ProcessArgs(conf conf.Config) Args {
 	var args Args
 
 	flags := flag.NewFlagSet("bookstore users api", 1)
-	flags.StringVar(&args.ConfigPath, "c", "config/config.yml", "Path to config file")
+	flags.StringVar(&args.ConfigPath, "c", "conf/app.yml", "Path to config file")
 
 	fu := flags.Usage
 	flags.Usage = func() {
@@ -32,8 +30,8 @@ func ProcessArgs(conf config.Config) Args {
 }
 
 func main() {
-	args := ProcessArgs(config.Config{})
-	conf, err := config.LoadCondigFromFile(args.ConfigPath)
+	args := ProcessArgs(conf.Config{})
+	conf, err := conf.LoadCondigFromFile(args.ConfigPath)
 
 	if err != nil {
 		fmt.Println(err)

@@ -1,41 +1,38 @@
-//+build wireinject
-
 package main
+
+//+build wireinject
 
 import (
 	"net/http"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/google/wire"
 
-	"github.com/chernyshev-alex/bookstore_users-api/app"
-	"github.com/chernyshev-alex/bookstore_users-api/controllers/ping"
-	"github.com/chernyshev-alex/bookstore_users-api/controllers/users"
-	"github.com/chernyshev-alex/bookstore_users-api/datasources/mysql/users_db"
-	dao_users "github.com/chernyshev-alex/bookstore_users-api/domain/users"
-	"github.com/chernyshev-alex/bookstore_users-api/services"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/app"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 )
 
-func inject(mysqlConf mysql.Config) app.Application {
+func inject(conf conf.Config) app.Application {
 	panic(wire.Build(
 
-		wire.Value(http.DefaultClient),
+		app.ProvideApp,
+		controllers.ProvideUserController,
+		controllers.ProvidePingController,
 
-		users_db.ProvideSqlClient,
-
-		ping.ProvidePingController,
-
-		services.ProvideUserService,
-		wire.Bind(new(services.UsersServiceInterface), new(*services.UsersService)),
-
-		dao_users.ProvideUserDao,
-		wire.Bind(new(dao_users.UsersDAOInterface), new(*dao_users.UserDAO)),
-
-		oauth.ProvideOAuthClient,
-		wire.Bind(new(oauth.HTTPClientInterface), new(*http.Client)),
+		app.NewOAuthClient,
 		wire.Bind(new(oauth.OAuthInterface), new(*oauth.OAuthClient)),
 
-		users.ProvideUserController,
-		app.ProvideApp,
+		services.NewService,
+		//	wire.Bind(new(services.UsersServiceInterface), new(*services.UsersService)),
+
+		mysql.NewUserDao,
+		wire.Bind(new(mysql.UsersDAOInterface), new(*mysql.UserDAO)),
+		//	users_db.ProvideSqlClient,
+
+		wire.Value(http.DefaultClient),
 	))
+	return nil
 }

@@ -27,7 +27,6 @@ func NewApp(appConf *config.Config,
 	}
 }
 
-// wired OAuthClient constructor
 func ProvideOAuthClient(httpClient oauth.HttpClientInterface, appConf *config.Config) *oauth.OAuthClient {
 	return oauth.NewAuthClient(httpClient, appConf.OAuth.URL)
 }

@@ -1,64 +1,65 @@
 package services
 
 import (
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
-	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/crypto_utils"
-	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/date_utils"
+	"database/sql"
+	"time"
+
+	intf "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/generated"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type UsersServiceInterface interface {
-	GetUser(int64) (*users.User, rest_errors.RestErr)
-	CreateUser(users.User) (*users.User, rest_errors.RestErr)
-	UpdateUser(bool, users.User) (*users.User, rest_errors.RestErr)
-	DeleteUser(int64) rest_errors.RestErr
-	SearchUser(string) (users.Users, rest_errors.RestErr)
-	LoginUser(users.LoginRequest) (*users.User, rest_errors.RestErr)
-}
-
-type UsersService interface {
-	UsersServiceInterface
-}
 type usersService struct {
-	usersDAO users.UsersDAOInterface
+	userDao intf.UserDao
 }
 
-func NewService(userDaoInterface users.UsersDAOInterface) UsersService {
+func NewService(userDao intf.UserDao) intf.UserService {
 	return &usersService{
-		usersDAO: userDaoInterface,
+		userDao: userDao,
 	}
 }
 
-// deprecated
-func ProvideUserService(userDaoInterface users.UsersDAOInterface) UsersServiceInterface {
-	return &usersService{
-		usersDAO: userDaoInterface,
-	}
-}
-
-func (s *usersService) GetUser(userId int64) (*users.User, rest_errors.RestErr) {
-	u, err := s.usersDAO.Get(userId)
+func (s *usersService) GetUser(userId int64) (*models.User, rest_errors.RestErr) {
+	result, err := s.userDao.Get(userId)
 	if err != nil {
 		return nil, err
 	}
-	return u, nil
+	return &models.User{
+		FirstName:   result.FirstName,
+		LastName:    result.LastName,
+		Email:       result.Email,
+		DateCreated: result.DateCreated,
+		Status:      result.Status,
+	}, nil
 }
 
-func (s *usersService) CreateUser(user users.User) (*users.User, rest_errors.RestErr) {
-	if err := user.Validate(); err != nil {
+func (s *usersService) CreateUser(u models.User) (*models.User, rest_errors.RestErr) {
+	if err := u.Validate(); err != nil {
 		return nil, err
 	}
-	user.Status = users.StatusActive
-	user.DateCreated = date_utils.GetNowDbFormat()
-	user.Password = crypto_utils.GetMD5(user.Password)
-	if err := s.usersDAO.Save(&user); err != nil {
+
+	insertUser := generated.InsertUserParams{
+		FirstName:   nillableStr(u.FirstName),
+		LastName:    nillableStr(u.LastName),
+		Email:       u.Email,
+		DateCreated: time.Now(),
+		Status:      nillableStr(u.Status),
+		Password:    nillableStr(u.Password),
+	}
+
+	userId, err := s.userDao.Save(insertUser)
+	if err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	u.Id = userId
+	return &u, nil
 }
 
-func (s *usersService) UpdateUser(isPartial bool, u users.User) (*users.User, rest_errors.RestErr) {
-	currentUser, err := s.GetUser(u.Id)
+func (s *usersService) UpdateUser(isPartial bool, u models.User) (*models.User, rest_errors.RestErr) {
+	cu, err := s.GetUser(u.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -69,42 +70,80 @@ func (s *usersService) UpdateUser(isPartial bool, u users.User) (*users.User, re
 
 	if isPartial {
 		if u.FirstName != "" {
-			currentUser.FirstName = u.FirstName
+			cu.FirstName = u.FirstName
 		}
 		if u.LastName != "" {
-			currentUser.LastName = u.LastName
+			cu.LastName = u.LastName
 		}
 		if u.Email != "" {
-			currentUser.Email = u.Email
+			cu.Email = u.Email
 		}
 
 	} else {
-		currentUser.FirstName = u.FirstName
-		currentUser.LastName = u.LastName
-		currentUser.Email = u.Email
+		cu.FirstName = u.FirstName
+		cu.LastName = u.LastName
+		cu.Email = u.Email
 	}
 
-	if err := s.usersDAO.Update(currentUser); err != nil {
+	updateUser := gen.UpdateUserParams{
+		FirstName: nillableStr(cu.FirstName),
+		LastName:  nillableStr(cu.FirstName),
+		Email:     u.Email,
+		ID:        u.id}
+
+	if err := s.userDao.Update(&updateUser); err != nil {
 		return nil, err
 	}
-	return currentUser, nil
+	return cu, nil
 }
 
 func (s *usersService) DeleteUser(userId int64) rest_errors.RestErr {
-	return s.usersDAO.Delete(&users.User{Id: userId})
+	return s.userDao.Delete(userId)
 }
 
-func (s *usersService) SearchUser(status string) (users.Users, rest_errors.RestErr) {
-	return s.usersDAO.FindByStatus(status)
-}
-
-func (s *usersService) LoginUser(req users.LoginRequest) (*users.User, rest_errors.RestErr) {
-	u := &users.User{
-		Email:    req.Email,
-		Password: crypto_utils.GetMD5(req.Password),
+func (s *usersService) SearchUsersByStatus(status string) ([]models.User, rest_errors.RestErr) {
+	result, err := s.userDao.FindByStatus(status)
+	if err != nil {
+		return err
 	}
-	if err := s.usersDAO.FindByEmailAndPsw(u); err != nil {
+	ls := make([]models.User, 0, len(result))
+	for _, rec := range result {
+		u := models.User{
+			Id:        int64(rec.ID),
+			FirstName: rec.FirstName.String,
+			LastName:  rec.LastName.String,
+			Email:     rec.Email,
+			//	DateCreated: date_utils.rec.DateCreated,  // TODO
+			Status: rec.Status.String,
+		}
+		ls = append(ls, u)
+	}
+	return ls, nil
+}
+
+func (s *usersService) LoginUser(rq models.LoginRequest) (*models.User, rest_errors.RestErr) {
+	input := gen.FindByEMailAndPswParams{
+		Email:    rq.Email,
+		Password: nillableStr(rq.Password),
+		Status:   models.STATUS_ACTIVE,
+	}
+
+	result, err := s.userDao.FindByEmailAndPsw(input)
+	if err != nil {
 		return nil, err
 	}
-	return u, nil
+
+	u := models.User{
+		Id:        result.ID,
+		FirstName: result.FirstName.String,
+		LastName:  result.LastName.String,
+		Email:     result.Email,
+		//	DateCreated: date_utils.rec.DateCreated,  // TODO
+		Status: result.Status.String,
+	}
+	return &u, nil
+}
+
+func nillableStr(s string) sql.NullString {
+	return sql.NullString{s, true}
 }

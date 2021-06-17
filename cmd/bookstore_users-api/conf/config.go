@@ -1,6 +1,9 @@
-package config
+package conf
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -14,13 +17,22 @@ type Config struct {
 		Uname  string `yaml:"uname" env:"USER_NAME"`
 	} `yaml:"database"`
 
+	OAuth struct {
+		URL string `yaml:"url" env:"OAUT_URL" env-default:"http://127.0.0.1:8082"`
+	} `yaml:"oauth"`
+
 	Server struct {
 		Host string `yaml:"host" env:"SRV_HOST,HOST" env-default:"localhost"`
 		Port string `yaml:"port" env:"SRV_PORT,PORT" env-default:"8081"`
 	} `yaml:"server"`
 }
 
-func LoadCondigFromFile(configPath string) (*Config, error) {
+func LoadConfigFromEnv(envVar string) (*Config, error) {
+	configFile, _ := filepath.Abs(os.Getenv(envVar))
+	return LoadConfigFromFile(configFile)
+}
+
+func LoadConfigFromFile(configPath string) (*Config, error) {
 	var config Config
 	if err := cleanenv.ReadConfig(configPath, &config); err != nil {
 		return nil, err

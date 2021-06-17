@@ -3,6 +3,8 @@ database:
   port: 3306
   schema: users_db
   uname: root
+oauth: 
+  URL: http://127.0.0.1:8082
 server:
   host: localhost
   port: 8081

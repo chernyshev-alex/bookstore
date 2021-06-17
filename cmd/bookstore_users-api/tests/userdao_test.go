@@ -1,16 +1,15 @@
-package users
+package tests
 
 import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/datasources/mysql/users_db"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
-	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +19,7 @@ const (
 
 var (
 	db *sql.DB
-	dq IUserDao
+	dq intf.UserDao
 )
 
 func TestMain(m *testing.M) {
@@ -31,16 +30,13 @@ func TestMain(m *testing.M) {
 }
 
 func setupTest() {
-	var conf config.Config
-
-	configFile, _ := filepath.Abs(os.Getenv(ENV_CONFIG_VAR))
-	if err := cleanenv.ReadConfig(configFile, &conf); err != nil {
+	conf, err := conf.LoadConfigFromEnv(ENV_CONFIG_VAR)
+	if err != nil {
 		panic(err)
 	}
-
-	mysqlConf := users_db.MakeMySQLConfig(conf)
-	db = users_db.ProvideSqlClient(mysqlConf)
-	dq = NewUserDao(db)
+	mysqlConf := mysql.MakeConfig(conf)
+	db = mysql.NewSqlClient(mysqlConf)
+	dq = mysql.NewUserDao(db)
 }
 
 func cleanUpDB() {
@@ -52,7 +48,7 @@ func cleanUpDB() {
 }
 
 func TestDaoSQLC(t *testing.T) {
-	u := users.User{
+	u := models.User{
 		FirstName: "fname",
 		LastName:  "lname",
 		Email:     "email@domain.com",

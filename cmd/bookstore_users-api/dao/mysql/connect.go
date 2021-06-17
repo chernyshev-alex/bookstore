@@ -1,16 +1,16 @@
-package users_db
+package mysql
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/config"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/go-sql-driver/mysql"
 )
 
-func MakeMySQLConfig(cfg config.Config) mysql.Config {
+func MakeConfig(cfg conf.Config) mysql.Config {
 	var mysqlConf mysql.Config
 
 	mysqlConf.Addr = fmt.Sprintf("%s:%s", cfg.Database.Host, cfg.Database.Port)
@@ -20,9 +20,9 @@ func MakeMySQLConfig(cfg config.Config) mysql.Config {
 	return mysqlConf
 }
 
-func ProvideSqlClient(dbconf mysql.Config) *sql.DB {
+func NewSqlClient(conf mysql.Config) *sql.DB {
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true",
-		dbconf.User, dbconf.Passwd, dbconf.Addr, dbconf.DBName)
+		conf.User, conf.Passwd, conf.Addr, conf.DBName)
 
 	log.Println("connection :", dataSourceName)
 	db, err := sql.Open("mysql", dataSourceName)
