@@ -11,6 +11,10 @@ func GetNow() time.Time {
 	return time.Now().UTC()
 }
 
+func Time2String(t time.Time) string {
+	return t.Format(apiDbLayout)
+}
+
 func GetNowString() string {
 	return GetNow().Format(apiDataLayout)
 }
