@@ -4,18 +4,20 @@ import (
 	"database/sql"
 	"time"
 
-	intf "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
+	dao "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/generated"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
+	srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 type usersService struct {
+	srv.UserService
 	userDao intf.UserDao
 }
 
-func NewService(userDao intf.UserDao) intf.UserService {
+func NewService(userDao dao.UserDao) srv.UserService {
 	return &usersService{
 		userDao: userDao,
 	}
@@ -27,11 +29,11 @@ func (s *usersService) GetUser(userId int64) (*models.User, rest_errors.RestErr)
 		return nil, err
 	}
 	return &models.User{
-		FirstName:   result.FirstName,
-		LastName:    result.LastName,
+		FirstName:   result.FirstName.String,
+		LastName:    result.LastName.String,
 		Email:       result.Email,
-		DateCreated: result.DateCreated,
-		Status:      result.Status,
+		DateCreated: date_utils.Time2String(result.DateCreated),
+		Status:      result.Status.String,
 	}, nil
 }
 
@@ -40,7 +42,7 @@ func (s *usersService) CreateUser(u models.User) (*models.User, rest_errors.Rest
 		return nil, err
 	}
 
-	insertUser := generated.InsertUserParams{
+	insertUser := gen.InsertUserParams{
 		FirstName:   nillableStr(u.FirstName),
 		LastName:    nillableStr(u.LastName),
 		Email:       u.Email,
@@ -89,9 +91,9 @@ func (s *usersService) UpdateUser(isPartial bool, u models.User) (*models.User, 
 		FirstName: nillableStr(cu.FirstName),
 		LastName:  nillableStr(cu.FirstName),
 		Email:     u.Email,
-		ID:        u.id}
+		ID:        int32(u.Id)}
 
-	if err := s.userDao.Update(&updateUser); err != nil {
+	if err := s.userDao.Update(updateUser); err != nil {
 		return nil, err
 	}
 	return cu, nil
@@ -104,7 +106,7 @@ func (s *usersService) DeleteUser(userId int64) rest_errors.RestErr {
 func (s *usersService) SearchUsersByStatus(status string) ([]models.User, rest_errors.RestErr) {
 	result, err := s.userDao.FindByStatus(status)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ls := make([]models.User, 0, len(result))
 	for _, rec := range result {
@@ -125,7 +127,7 @@ func (s *usersService) LoginUser(rq models.LoginRequest) (*models.User, rest_err
 	input := gen.FindByEMailAndPswParams{
 		Email:    rq.Email,
 		Password: nillableStr(rq.Password),
-		Status:   models.STATUS_ACTIVE,
+		Status:   nillableStr(models.STATUS_ACTIVE),
 	}
 
 	result, err := s.userDao.FindByEmailAndPsw(input)
@@ -134,12 +136,12 @@ func (s *usersService) LoginUser(rq models.LoginRequest) (*models.User, rest_err
 	}
 
 	u := models.User{
-		Id:        result.ID,
-		FirstName: result.FirstName.String,
-		LastName:  result.LastName.String,
-		Email:     result.Email,
-		//	DateCreated: date_utils.rec.DateCreated,  // TODO
-		Status: result.Status.String,
+		Id:          int64(result.ID),
+		FirstName:   result.FirstName.String,
+		LastName:    result.LastName.String,
+		Email:       result.Email,
+		DateCreated: date_utils.Time2String(result.DateCreated),
+		Status:      result.Status.String,
 	}
 	return &u, nil
 }

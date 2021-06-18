@@ -63,6 +63,8 @@ github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-2021060820152
 github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210608201528-30f3944a9c2d/go.mod h1:Kdq5N4wwhXPllvD9ZbKvPEyHMgbOHxa4VkQQ609aCbQ=
 github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210609220851-d7c9b63ef24e h1:40TJyHK/AGj0kAOsfZ8qT3U9uWH8fujATBxZUaLU2OY=
 github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210609220851-d7c9b63ef24e/go.mod h1:Kdq5N4wwhXPllvD9ZbKvPEyHMgbOHxa4VkQQ609aCbQ=
+github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210618165705-2eba8b769f1e h1:kTtZ6NKndS4bhLtK4JOlaWPxi9NJPr51WpqCf5Y+Jac=
+github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go v0.0.0-20210618165705-2eba8b769f1e/go.mod h1:Kdq5N4wwhXPllvD9ZbKvPEyHMgbOHxa4VkQQ609aCbQ=
 github.com/chernyshev-alex/bookstore_users-api v0.0.0-20210429234028-28ea408b33f0 h1:t0RcNiio1Ze5+3G7ZSntjQZ9Cis5YsGu1n9U8A3e/gY=
 github.com/chernyshev-alex/bookstore_users-api v0.0.0-20210429234028-28ea408b33f0/go.mod h1:kruWThne6hxaUmwRLhGBjKnqE4iPfHK826rQ0ApSk2Q=
 github.com/chernyshev-alex/bookstore_utils_go v1.0.2 h1:id3UJnjnjFyiK3xMuG7ll6rSCCgoTS3KFyRxYKKn1Jk=

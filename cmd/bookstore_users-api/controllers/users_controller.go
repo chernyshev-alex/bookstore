@@ -4,22 +4,21 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
-	usersService services.UsersServiceInterface
+	usersService intf.UserService
 	oauthService oauth.OAuthInterface
 }
 
-func ProvideUserController(userServiceInterface services.UsersServiceInterface,
+func ProvideUserController(serviceIntf intf.UserService,
 	oauthService oauth.OAuthInterface) *UserController {
 	return &UserController{
-		usersService: userServiceInterface,
+		usersService: serviceIntf,
 		oauthService: oauthService,
 	}
 }

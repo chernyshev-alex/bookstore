@@ -5,34 +5,34 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/domain/users"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 )
 
 type userDaoMock struct {
-	getFn     func(int64) (*users.User, rest_errors.RestErr)
-	modifyFn  func(*users.User) rest_errors.RestErr
-	findFn    func(string) ([]users.User, rest_errors.RestErr)
-	findGetFn func(*users.User) rest_errors.RestErr
+	getFn     func(int64) (*models.User, rest_errors.RestErr)
+	modifyFn  func(*models.User) rest_errors.RestErr
+	findFn    func(string) ([]models.User, rest_errors.RestErr)
+	findGetFn func(*models.User) rest_errors.RestErr
 }
 
-func (m userDaoMock) Get(userId int64) (*users.User, rest_errors.RestErr) {
+func (m userDaoMock) Get(userId int64) (*models.User, rest_errors.RestErr) {
 	return m.getFn(userId)
 }
-func (m userDaoMock) Save(u *users.User) rest_errors.RestErr {
+func (m userDaoMock) Save(u *models.User) rest_errors.RestErr {
 	return m.modifyFn(u)
 }
-func (m userDaoMock) Update(u *users.User) rest_errors.RestErr {
+func (m userDaoMock) Update(u *models.User) rest_errors.RestErr {
 	return m.modifyFn(u)
 }
-func (m userDaoMock) Delete(u *users.User) rest_errors.RestErr {
+func (m userDaoMock) Delete(u *models.User) rest_errors.RestErr {
 	return m.modifyFn(u)
 }
-func (m userDaoMock) FindByStatus(status string) ([]users.User, rest_errors.RestErr) {
+func (m userDaoMock) FindByStatus(status string) ([]models.User, rest_errors.RestErr) {
 	return m.findFn(status)
 }
-func (m userDaoMock) FindByEmailAndPsw(u *users.User) rest_errors.RestErr {
+func (m userDaoMock) FindByEmailAndPsw(u *models.User) rest_errors.RestErr {
 	return m.findGetFn(u)
 }
 
@@ -48,8 +48,8 @@ func withMock(configFn func(*userDaoMock)) UsersService {
 
 func TestGetUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.getFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-			return &users.User{Id: 1, FirstName: "fname", LastName: "lname", Email: "email"}, nil
+		mock.getFn = func(userId int64) (*models.User, rest_errors.RestErr) {
+			return &models.User{Id: 1, FirstName: "fname", LastName: "lname", Email: "email"}, nil
 		}
 	})
 	u, err := usersService.GetUser(1)
@@ -59,7 +59,7 @@ func TestGetUserOk(t *testing.T) {
 
 func TestGetUserNotFound(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.getFn = func(userId int64) (*users.User, rest_errors.RestErr) {
+		mock.getFn = func(userId int64) (*models.User, rest_errors.RestErr) {
 			return nil, rest_errors.NewNotFoundError("user not found")
 		}
 	})
@@ -70,7 +70,7 @@ func TestGetUserNotFound(t *testing.T) {
 
 func TestGetUserFailed(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.getFn = func(userId int64) (*users.User, rest_errors.RestErr) {
+		mock.getFn = func(userId int64) (*models.User, rest_errors.RestErr) {
 			return nil, rest_errors.NewInternalServerError("failed", errors.New("db error"))
 		}
 	})
@@ -81,13 +81,13 @@ func TestGetUserFailed(t *testing.T) {
 
 func TestCreateUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			u.Id = 1
 			return nil
 		}
 	})
 
-	original := users.User{Email: "xxx@xxx.com", Password: "111"}
+	original := models.User{Email: "xxx@xxx.com", Password: "111"}
 	created, err := usersService.CreateUser(original)
 
 	assert.Nil(t, err)
@@ -96,13 +96,13 @@ func TestCreateUserOk(t *testing.T) {
 
 func TestCreateUserFailedMandatoryFieldsRequired(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			u.Id = 1
 			return nil
 		}
 	})
 
-	original := users.User{}
+	original := models.User{}
 	created, err := usersService.CreateUser(original)
 
 	assert.Nil(t, created)
@@ -111,16 +111,16 @@ func TestCreateUserFailedMandatoryFieldsRequired(t *testing.T) {
 
 func TestUpdateUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.getFn = func(userId int64) (*users.User, rest_errors.RestErr) {
-			return &users.User{Id: 1, FirstName: "old_value"}, nil
+		mock.getFn = func(userId int64) (*models.User, rest_errors.RestErr) {
+			return &models.User{Id: 1, FirstName: "old_value"}, nil
 		}
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			u.FirstName = "new_value"
 			return nil
 		}
 	})
 
-	original := users.User{Id: 1, FirstName: "new_value", Email: "xxx@xxx.com", Password: "111"}
+	original := models.User{Id: 1, FirstName: "new_value", Email: "xxx@xxx.com", Password: "111"}
 	updated, err := usersService.UpdateUser(true, original)
 
 	assert.Nil(t, err)
@@ -129,16 +129,16 @@ func TestUpdateUserOk(t *testing.T) {
 
 func TestUpdateUserNotFound(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.getFn = func(userId int64) (*users.User, rest_errors.RestErr) {
+		mock.getFn = func(userId int64) (*models.User, rest_errors.RestErr) {
 			return nil, rest_errors.NewNotFoundError("user not found")
 		}
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			u.FirstName = "new_value"
 			return nil
 		}
 	})
 
-	original := users.User{Id: 1, FirstName: "new_value", Email: "xxx@xxx.com", Password: "111"}
+	original := models.User{Id: 1, FirstName: "new_value", Email: "xxx@xxx.com", Password: "111"}
 	updated, err := usersService.UpdateUser(true, original)
 
 	assert.Nil(t, updated)
@@ -147,7 +147,7 @@ func TestUpdateUserNotFound(t *testing.T) {
 
 func TestDeleteUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			return nil
 		}
 	})
@@ -157,7 +157,7 @@ func TestDeleteUserOk(t *testing.T) {
 
 func TestDeleteFailed(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.modifyFn = func(u *users.User) rest_errors.RestErr {
+		mock.modifyFn = func(u *models.User) rest_errors.RestErr {
 			return rest_errors.NewNotFoundError("not found")
 		}
 	})
@@ -167,23 +167,23 @@ func TestDeleteFailed(t *testing.T) {
 
 func TestSearchUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.findFn = func(status string) ([]users.User, rest_errors.RestErr) {
-			return []users.User{{Id: 1}}, nil
+		mock.findFn = func(status string) ([]models.User, rest_errors.RestErr) {
+			return []models.User{{Id: 1}}, nil
 		}
 	})
-	ls, err := usersService.SearchUser(users.StatusActive)
+	ls, err := usersService.SearchUser(models.StatusActive)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, len(ls))
 }
 
 func TestLoginUserOk(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.findGetFn = func(u *users.User) rest_errors.RestErr {
+		mock.findGetFn = func(u *models.User) rest_errors.RestErr {
 			u.Id = 1
 			return nil
 		}
 	})
-	lrq := users.LoginRequest{Email: "xxx@xxx.com", Password: "111"}
+	lrq := models.LoginRequest{Email: "xxx@xxx.com", Password: "111"}
 	u, err := usersService.LoginUser(lrq)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, u.Id)
@@ -191,11 +191,11 @@ func TestLoginUserOk(t *testing.T) {
 
 func TestLoginNotFound(t *testing.T) {
 	usersService := withMock(func(mock *userDaoMock) {
-		mock.findGetFn = func(u *users.User) rest_errors.RestErr {
+		mock.findGetFn = func(u *models.User) rest_errors.RestErr {
 			return rest_errors.NewNotFoundError("not found")
 		}
 	})
-	lrq := users.LoginRequest{Email: "xxx@xxx.com", Password: "111"}
+	lrq := models.LoginRequest{Email: "xxx@xxx.com", Password: "111"}
 	u, err := usersService.LoginUser(lrq)
 
 	assert.Nil(t, u)

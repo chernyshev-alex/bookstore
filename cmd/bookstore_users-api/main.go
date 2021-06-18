@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -31,7 +32,7 @@ func ProcessArgs(conf conf.Config) Args {
 
 func main() {
 	args := ProcessArgs(conf.Config{})
-	conf, err := conf.LoadCondigFromFile(args.ConfigPath)
+	conf, err := conf.LoadConfigFromFile(args.ConfigPath)
 
 	if err != nil {
 		fmt.Println(err)
@@ -40,8 +41,6 @@ func main() {
 
 	fmt.Println("starting with config ", args.ConfigPath)
 
-	mysqlConf := users_db.MakeMySQLConfig(*conf)
-
-	app := inject(mysqlConf)
+	app := inject(*conf)
 	app.StartApp()
 }

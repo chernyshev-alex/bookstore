@@ -2,7 +2,7 @@ package intf
 
 import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
-	"github.com/chernyshev-alex/bookstore_utils_go/rest_errors"
+	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 type UserService interface {
