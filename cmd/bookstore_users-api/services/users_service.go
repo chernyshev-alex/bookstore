@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	dao "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
@@ -15,7 +14,7 @@ import (
 
 type usersService struct {
 	srv.UserService
-	userDao intf.UserDao
+	userDao dao.UserDao
 }
 
 func NewService(userDao dao.UserDao) srv.UserService {
