@@ -10,6 +10,6 @@ type UserService interface {
 	CreateUser(models.User) (*models.User, rest_errors.RestErr)
 	UpdateUser(bool, models.User) (*models.User, rest_errors.RestErr)
 	DeleteUser(int64) rest_errors.RestErr
-	SearchUsers(string) ([]models.User, rest_errors.RestErr)
+	SearchUsersByStatus(string) ([]models.User, rest_errors.RestErr)
 	LoginUser(models.LoginRequest) (*models.User, rest_errors.RestErr)
 }

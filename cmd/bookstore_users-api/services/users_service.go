@@ -30,6 +30,7 @@ func (s *usersService) GetUser(userId int64) (*models.User, rest_errors.RestErr)
 		return nil, err
 	}
 	return &models.User{
+		Id:          int64(result.ID),
 		FirstName:   result.FirstName.String,
 		LastName:    result.LastName.String,
 		Email:       result.Email,
@@ -148,5 +149,5 @@ func (s *usersService) LoginUser(rq models.LoginRequest) (*models.User, rest_err
 }
 
 func nillableStr(s string) sql.NullString {
-	return sql.NullString{s, true}
+	return sql.NullString{String: s, Valid: true}
 }
