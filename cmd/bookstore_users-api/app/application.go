@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	c "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
-	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
+	oauth "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/gin-gonic/gin"
 )

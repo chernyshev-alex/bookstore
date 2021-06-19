@@ -15,24 +15,25 @@ import (
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 )
 
-func inject(conf conf.Config) app.Application {
+func inject(conf *conf.Config) app.Application {
 	panic(wire.Build(
 
 		app.ProvideApp,
-		controllers.ProvideUserController,
 		controllers.ProvidePingController,
+		controllers.ProvideUserController,
 
 		app.NewOAuthClient,
 		wire.Bind(new(oauth.OAuthInterface), new(*oauth.OAuthClient)),
 
 		services.NewService,
-		//	wire.Bind(new(services.UsersServiceInterface), new(*services.UsersService)),
 
 		mysql.NewUserDao,
-		wire.Bind(new(mysql.UsersDAOInterface), new(*mysql.UserDAO)),
-		//	users_db.ProvideSqlClient,
+
+		wire.Bind(new(oauth.HttpClientInterface), new(*http.Client)),
+		mysql.MakeConfig,
+		mysql.NewSqlClient,
 
 		wire.Value(http.DefaultClient),
 	))
-	return nil
+
 }

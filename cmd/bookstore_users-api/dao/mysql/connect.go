@@ -10,7 +10,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-func MakeConfig(cfg conf.Config) mysql.Config {
+func MakeConfig(cfg *conf.Config) mysql.Config {
 	var mysqlConf mysql.Config
 
 	mysqlConf.Addr = fmt.Sprintf("%s:%s", cfg.Database.Host, cfg.Database.Port)

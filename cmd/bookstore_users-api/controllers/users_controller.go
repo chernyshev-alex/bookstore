@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
@@ -11,14 +12,14 @@ import (
 )
 
 type UserController struct {
-	usersService intf.UserService
+	srv          intf.UserService
 	oauthService oauth.OAuthInterface
 }
 
 func ProvideUserController(serviceIntf intf.UserService,
 	oauthService oauth.OAuthInterface) *UserController {
 	return &UserController{
-		usersService: serviceIntf,
+		srv:          serviceIntf,
 		oauthService: oauthService,
 	}
 }
@@ -32,13 +33,13 @@ func getUserId(userIdParam string) (int64, rest_errors.RestErr) {
 }
 
 func (uc UserController) Create(c *gin.Context) {
-	var user users.User
+	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status(), restErr)
 		return
 	}
-	result, err := uc.usersService.CreateUser(user)
+	result, err := uc.srv.CreateUser(user)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
@@ -58,7 +59,7 @@ func (uc UserController) Get(c *gin.Context) {
 		return
 	}
 
-	result, getErr := uc.usersService.GetUser(userId)
+	result, getErr := uc.srv.GetUser(userId)
 	if getErr != nil {
 		c.JSON(getErr.Status(), getErr)
 		return
@@ -77,7 +78,7 @@ func (uc UserController) Update(c *gin.Context) {
 		return
 	}
 
-	var u users.User
+	var u models.User
 	if err := c.ShouldBindJSON(&u); err != nil {
 		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status(), restErr)
@@ -88,7 +89,7 @@ func (uc UserController) Update(c *gin.Context) {
 
 	isPartial := c.Request.Method == http.MethodPatch
 
-	result, err := uc.usersService.UpdateUser(isPartial, u)
+	result, err := uc.srv.UpdateUser(isPartial, u)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
@@ -102,7 +103,7 @@ func (uc UserController) Delete(c *gin.Context) {
 		c.JSON(err.Status(), err)
 		return
 	}
-	if err := uc.usersService.DeleteUser(userId); err != nil {
+	if err := uc.srv.DeleteUser(userId); err != nil {
 		c.JSON(err.Status(), err)
 		return
 	}
@@ -110,28 +111,25 @@ func (uc UserController) Delete(c *gin.Context) {
 }
 
 func (uc UserController) Search(c *gin.Context) {
-
 	status := c.Query("status")
-
-	users, err := uc.usersService.SearchUser(status)
+	users, err := uc.srv.SearchUsers(status)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
 	}
-
-	c.JSON(http.StatusOK, users.Marshall(c.GetHeader("X-Public") == "true"))
+	c.JSON(http.StatusOK, users[0].Marshall(c.GetHeader("X-Public") == "true"))
 }
 
 func (uc UserController) Login(c *gin.Context) {
+	var req models.LoginRequest
 
-	var req users.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		restErr := rest_errors.NewBadRequestError("invalid json body")
 		c.JSON(restErr.Status(), restErr)
 		return
 	}
 
-	u, err := uc.usersService.LoginUser(req)
+	u, err := uc.srv.LoginUser(req)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return

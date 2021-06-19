@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	c "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
 	mock_srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/mocks"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
 	mock_oa "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
@@ -24,7 +23,7 @@ type UCServiceSuite struct {
 	suite.Suite
 	mockedUserService  *mock_srv.UsersService
 	mockedOAuthService *mock_oa.OAuthInterface
-	userController     *c.UserController // TODO intf
+	userController     *UserController // TODO intf
 	ctx                *gin.Context
 	response           *httptest.ResponseRecorder
 }
@@ -36,7 +35,7 @@ func TestUCServiceSuite(t *testing.T) {
 func (s *UCServiceSuite) SetupTest() {
 	s.mockedUserService = new(mock_srv.UsersService)
 	s.mockedOAuthService = new(mock_oa.OAuthInterface)
-	s.userController = c.ProvideUserController(s.mockedUserService, s.mockedOAuthService)
+	s.userController = ProvideUserController(s.mockedUserService, s.mockedOAuthService)
 
 	s.response = httptest.NewRecorder()
 	s.ctx, _ = gin.CreateTestContext(s.response)

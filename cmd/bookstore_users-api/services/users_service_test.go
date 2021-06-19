@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,10 +39,10 @@ func (m userDaoMock) FindByEmailAndPsw(u *models.User) rest_errors.RestErr {
 
 // helpers
 
-func withMock(configFn func(*userDaoMock)) UsersService {
+func withMock(configFn func(*userDaoMock)) intf.UserService {
 	userDaoMock := new(userDaoMock)
 	configFn(userDaoMock)
-	return NewService(userDaoMock)
+	return NewService(mocks.userDaoMock)
 }
 
 // tests
@@ -171,7 +172,7 @@ func TestSearchUserOk(t *testing.T) {
 			return []models.User{{Id: 1}}, nil
 		}
 	})
-	ls, err := usersService.SearchUser(models.StatusActive)
+	ls, err := usersService.SearchUser(models.STATUS_ACTIVE)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, len(ls))
 }
