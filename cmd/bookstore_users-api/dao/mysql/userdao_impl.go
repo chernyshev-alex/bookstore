@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
@@ -28,6 +27,7 @@ func nillableStr(s string) sql.NullString {
 }
 
 func (d *userDao) Get(id int64) (*gen.FindUserRow, rest_errors.RestErr) {
+	fmt.Println("called Get", id)
 	result, err := d.dbq.FindUser(context.Background(), int32(id))
 	if err != nil {
 		logger.Error("get user", err)
@@ -39,7 +39,7 @@ func (d *userDao) Get(id int64) (*gen.FindUserRow, rest_errors.RestErr) {
 func (d *userDao) Save(u gen.InsertUserParams) (int64, rest_errors.RestErr) {
 	result, err := d.dbq.InsertUser(context.Background(), u)
 	if err != nil {
-		logger.Error("get user", err)
+		logger.Error("save user", err)
 		return -1, rest_errors.NewInternalServerError("db error", err)
 	}
 
@@ -52,16 +52,10 @@ func (d *userDao) Save(u gen.InsertUserParams) (int64, rest_errors.RestErr) {
 }
 
 func (d *userDao) Update(u gen.UpdateUserParams) rest_errors.RestErr {
-	result, err := d.dbq.UpdateUser(context.Background(), u)
+	_, err := d.dbq.UpdateUser(context.Background(), u)
 	if err != nil {
 		logger.Error("update user", err)
 		return rest_errors.NewInternalServerError("db error", err)
-	}
-	nrows, _ := result.RowsAffected()
-	if nrows != 1 {
-		e := errors.New("update failed")
-		logger.Error("not affected", e)
-		return rest_errors.NewInternalServerError("update error", e)
 	}
 	return nil
 }

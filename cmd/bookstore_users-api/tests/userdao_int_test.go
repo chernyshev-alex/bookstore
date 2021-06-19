@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +33,7 @@ func TestMain(m *testing.M) {
 func setupTest() {
 	conf, err := conf.LoadConfigFromEnv(ENV_CONFIG_VAR)
 	if err != nil {
-		panic(err)
+		panic(err.Error() + "check ENV_CONFIG_VAR")
 	}
 	mysqlConf := mysql.MakeConfig(conf)
 	db = mysql.NewSqlClient(mysqlConf)
@@ -40,6 +41,9 @@ func setupTest() {
 }
 
 func cleanUpDB() {
+	if db == nil {
+		return
+	}
 	stmt, err := db.Prepare("truncate table users_db.users;")
 	if err != nil {
 		fmt.Println(err)
@@ -48,61 +52,76 @@ func cleanUpDB() {
 }
 
 func TestDaoSQLC(t *testing.T) {
-	u := models.User{
-		FirstName: "fname",
-		LastName:  "lname",
-		Email:     "email@domain.com",
-		Status:    "status",
-		Password:  "hashed_psw",
+	u := gen.InsertUserParams{
+		FirstName:   nillableStr("fname"),
+		LastName:    nillableStr("lname"),
+		Email:       "email@domain.com",
+		DateCreated: time.Now(),
+		Status:      nillableStr("status"),
+		Password:    nillableStr("hashed_psw"),
 	}
-	err := dq.Save(&u)
+	userId, err := dq.Save(u)
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := dq.Get(int32(u.Id))
+	result, err := dq.Get(userId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.EqualValues(t, u.Id, result.Id)
+	assert.EqualValues(t, userId, result.ID)
 
-	err = dq.Save(&u)
+	_, err = dq.Save(u)
 	if err == nil {
 		t.Fatal(err)
 	}
 	assert.NotNil(t, err, "same Email isn't allowed")
 
-	err = dq.FindByEmailAndPsw(&u)
+	findByEMailAndPswParams := gen.FindByEMailAndPswParams{
+		Email:    u.Email,
+		Password: u.Password,
+		Status:   u.Status,
+	}
+	findResult, err := dq.FindByEmailAndPsw(findByEMailAndPswParams)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.EqualValues(t, "fname", u.FirstName)
+	assert.EqualValues(t, u.FirstName, findResult.FirstName)
 
-	users, err := dq.FindByStatus("status")
+	users, err := dq.FindByStatus(u.Status.String)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.True(t, len(users) == 1)
 
-	u.FirstName = "changed"
-	err = dq.Update(&u)
+	u.FirstName = nillableStr("changed")
+	updateParams := gen.UpdateUserParams{
+		FirstName: u.FirstName,
+		Email:     u.Email,
+		ID:        int32(userId),
+	}
+	err = dq.Update(updateParams)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	result, err = dq.Get(int32(u.Id))
+	result, err = dq.Get(userId)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.EqualValues(t, "changed", result.FirstName)
+	assert.EqualValues(t, "changed", result.FirstName.String)
 
-	err = dq.Delete(&u)
+	err = dq.Delete(userId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = dq.Get(int32(u.Id))
+	_, err = dq.Get(userId)
 	if err == nil {
 		t.Fatal(err)
 	}
+}
+
+func nillableStr(s string) sql.NullString {
+	return sql.NullString{String: s, Valid: true}
 }
