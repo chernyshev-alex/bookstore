@@ -1,4 +1,4 @@
-package intf
+package user_dao
 
 import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"

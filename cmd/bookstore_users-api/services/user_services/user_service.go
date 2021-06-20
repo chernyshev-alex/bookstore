@@ -1,23 +1,22 @@
-package services
+package user_services
 
 import (
 	"database/sql"
 	"time"
 
-	dao "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/user_dao"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
-	srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/date_utils"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
 type usersService struct {
-	srv.UserService
-	userDao dao.UserDao
+	UserService
+	userDao user_dao.UserDao
 }
 
-func NewService(userDao dao.UserDao) srv.UserService {
+func NewService(userDao user_dao.UserDao) UserService {
 	return &usersService{
 		userDao: userDao,
 	}

@@ -1,4 +1,4 @@
-package intf
+package user_services
 
 import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"

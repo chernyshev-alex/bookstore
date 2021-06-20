@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/user_dao"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/logger"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
@@ -16,7 +16,7 @@ type userDao struct {
 	dbq       *gen.Queries
 }
 
-func NewUserDao(client *sql.DB) intf.UserDao {
+func NewUserDao(client *sql.DB) user_dao.UserDao {
 	return &userDao{SqlClient: client,
 		dbq: gen.New(client),
 	}

@@ -1,4 +1,4 @@
-package services
+package user_services
 
 import (
 	"database/sql"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,7 +43,7 @@ func (m userDaoMock) FindByEmailAndPsw(p gen.FindByEMailAndPswParams) (gen.FindB
 
 // helpers
 
-func withMock(configFn func(*userDaoMock)) intf.UserService {
+func withMock(configFn func(*userDaoMock)) UserService {
 	userDaoMock := new(userDaoMock)
 	configFn(userDaoMock)
 	return NewService(userDaoMock)

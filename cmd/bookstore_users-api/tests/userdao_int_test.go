@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/intf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql/gen"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/user_dao"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +20,7 @@ const (
 
 var (
 	db *sql.DB
-	dq intf.UserDao
+	dq user_dao.UserDao
 )
 
 func TestMain(m *testing.M) {
