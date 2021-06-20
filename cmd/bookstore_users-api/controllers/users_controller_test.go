@@ -11,7 +11,7 @@ import (
 
 	mock_srv "github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/mocks"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
-	mock_oa "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
+	mocks_oauth "github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/mocks"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +21,8 @@ import (
 
 type UCServiceSuite struct {
 	suite.Suite
-	mockedUserService  *mock_srv.UsersService
-	mockedOAuthService *mock_oa.OAuthInterface
+	mockedUserService  *mock_srv.UserService
+	mockedOAuthService *mocks_oauth.OAuthInterface
 	userController     *UserController // TODO intf
 	ctx                *gin.Context
 	response           *httptest.ResponseRecorder
@@ -33,8 +33,8 @@ func TestUCServiceSuite(t *testing.T) {
 }
 
 func (s *UCServiceSuite) SetupTest() {
-	s.mockedUserService = new(mock_srv.UsersService)
-	s.mockedOAuthService = new(mock_oa.OAuthInterface)
+	s.mockedUserService = new(mock_srv.UserService)
+	s.mockedOAuthService = new(mocks_oauth.OAuthInterface)
 	s.userController = ProvideUserController(s.mockedUserService, s.mockedOAuthService)
 
 	s.response = httptest.NewRecorder()
@@ -195,12 +195,6 @@ func (s *UCServiceSuite) TestRemoveUserOk() {
 }
 
 func (s *UCServiceSuite) TestRemoveUserNoIdParam() {
-	userId := int64(-1)
-
-	s.requestWithUserAndParams(http.MethodGet, nil, nil)
-
-	s.mockedUserService.On("DeleteUser", userId).Return(nil)
-
 	s.userController.Delete(s.ctx)
 	s.mockedUserService.AssertExpectations(s.T())
 	assert.EqualValues(s.T(), http.StatusBadRequest, s.ctx.Writer.Status())
@@ -222,8 +216,8 @@ func (s *UCServiceSuite) TestRemoveUserServiceError() {
 func (s *UCServiceSuite) TestSearchUserOk() {
 	s.requestWithQuery(http.MethodGet, "/?status=active")
 
-	var result models.Users = []models.User{}
-	s.mockedUserService.On("SearchUser", mock.AnythingOfType("string")).Return(result, nil)
+	result := []models.User{{Id: 1, FirstName: "fname"}}
+	s.mockedUserService.On("SearchUsersByStatus", mock.AnythingOfType("string")).Return(result, nil)
 
 	s.userController.Search(s.ctx)
 	s.mockedUserService.AssertExpectations(s.T())
