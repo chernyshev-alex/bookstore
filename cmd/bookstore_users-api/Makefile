@@ -26,3 +26,15 @@ mysql-start:
 .PHONY: mysql-stop
 mysql-stop:
 	mysql.server stop 
+
+.PHONY: wire-gen
+wire-gen:
+	wire
+
+.PHONY: mocks-gen
+mocks-gen:
+	mockery --name=UserService --dir=./services/user_services  --output ./mocks 
+
+.PHONY: app-run
+app-run:
+	go run main.go  

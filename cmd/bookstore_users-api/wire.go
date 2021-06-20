@@ -1,6 +1,6 @@
-package main
-
 //+build wireinject
+
+package main
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/user_services"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 )
 
@@ -25,7 +25,7 @@ func inject(conf *conf.Config) app.Application {
 		app.NewOAuthClient,
 		wire.Bind(new(oauth.OAuthInterface), new(*oauth.OAuthClient)),
 
-		services.NewService,
+		user_services.NewService,
 
 		mysql.NewUserDao,
 

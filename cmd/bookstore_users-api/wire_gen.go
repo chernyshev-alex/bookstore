@@ -10,7 +10,7 @@ import (
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/conf"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/controllers"
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/dao/mysql"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/user_services"
 	"net/http"
 )
 
@@ -21,7 +21,7 @@ func inject(conf2 *conf.Config) app.Application {
 	config := mysql.MakeConfig(conf2)
 	db := mysql.NewSqlClient(config)
 	userDao := mysql.NewUserDao(db)
-	userService := services.NewService(userDao)
+	userService := user_services.NewService(userDao)
 	client := _wireClientValue
 	oAuthClient := app.NewOAuthClient(client, conf2)
 	userController := controllers.ProvideUserController(userService, oAuthClient)

@@ -5,18 +5,18 @@ import (
 	"strconv"
 
 	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/models"
-	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/intf"
+	"github.com/chernyshev-alex/bookstore/cmd/bookstore_users_api/services/user_services"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore-oauth-go/oauth"
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 	"github.com/gin-gonic/gin"
 )
 
 type UserController struct {
-	srv          intf.UserService
+	srv          user_services.UserService
 	oauthService oauth.OAuthInterface
 }
 
-func ProvideUserController(serviceIntf intf.UserService,
+func ProvideUserController(serviceIntf user_services.UserService,
 	oauthService oauth.OAuthInterface) *UserController {
 	return &UserController{
 		srv:          serviceIntf,
@@ -112,7 +112,7 @@ func (uc UserController) Delete(c *gin.Context) {
 
 func (uc UserController) Search(c *gin.Context) {
 	status := c.Query("status")
-	users, err := uc.srv.SearchUsers(status)
+	users, err := uc.srv.SearchUsersByStatus(status)
 	if err != nil {
 		c.JSON(err.Status(), err)
 		return
