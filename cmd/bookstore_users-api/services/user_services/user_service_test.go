@@ -43,7 +43,7 @@ func (m userDaoMock) FindByEmailAndPsw(p gen.FindByEMailAndPswParams) (gen.FindB
 
 // helpers
 
-func withMock(configFn func(*userDaoMock)) UserService {
+func withMock(configFn func(*userDaoMock)) UserServiceIntf {
 	userDaoMock := new(userDaoMock)
 	configFn(userDaoMock)
 	return NewService(userDaoMock)

@@ -5,7 +5,7 @@ import (
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type UserDao interface {
+type UserDaoIntf interface {
 	Get(int64) (*gen.FindUserRow, rest_errors.RestErr)
 	Save(gen.InsertUserParams) (int64, rest_errors.RestErr)
 	Update(gen.UpdateUserParams) rest_errors.RestErr

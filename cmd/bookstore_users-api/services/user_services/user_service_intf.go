@@ -5,7 +5,7 @@ import (
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type UserService interface {
+type UserServiceIntf interface {
 	GetUser(int64) (*models.User, rest_errors.RestErr)
 	CreateUser(models.User) (*models.User, rest_errors.RestErr)
 	UpdateUser(bool, models.User) (*models.User, rest_errors.RestErr)

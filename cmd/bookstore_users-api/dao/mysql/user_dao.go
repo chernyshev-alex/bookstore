@@ -11,13 +11,15 @@ import (
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type userDao struct {
+var _ user_dao.UserDaoIntf = (*UserDao)(nil)
+
+type UserDao struct {
 	SqlClient *sql.DB
 	dbq       *gen.Queries
 }
 
-func NewUserDao(client *sql.DB) user_dao.UserDao {
-	return &userDao{SqlClient: client,
+func NewUserDao(client *sql.DB) *UserDao {
+	return &UserDao{SqlClient: client,
 		dbq: gen.New(client),
 	}
 }
@@ -26,7 +28,7 @@ func nillableStr(s string) sql.NullString {
 	return sql.NullString{String: s, Valid: true}
 }
 
-func (d *userDao) Get(id int64) (*gen.FindUserRow, rest_errors.RestErr) {
+func (d *UserDao) Get(id int64) (*gen.FindUserRow, rest_errors.RestErr) {
 	fmt.Println("called Get", id)
 	result, err := d.dbq.FindUser(context.Background(), int32(id))
 	if err != nil {
@@ -36,7 +38,7 @@ func (d *userDao) Get(id int64) (*gen.FindUserRow, rest_errors.RestErr) {
 	return &result, nil
 }
 
-func (d *userDao) Save(u gen.InsertUserParams) (int64, rest_errors.RestErr) {
+func (d *UserDao) Save(u gen.InsertUserParams) (int64, rest_errors.RestErr) {
 	result, err := d.dbq.InsertUser(context.Background(), u)
 	if err != nil {
 		logger.Error("save user", err)
@@ -51,7 +53,7 @@ func (d *userDao) Save(u gen.InsertUserParams) (int64, rest_errors.RestErr) {
 	return userId, nil
 }
 
-func (d *userDao) Update(u gen.UpdateUserParams) rest_errors.RestErr {
+func (d *UserDao) Update(u gen.UpdateUserParams) rest_errors.RestErr {
 	_, err := d.dbq.UpdateUser(context.Background(), u)
 	if err != nil {
 		logger.Error("update user", err)
@@ -60,7 +62,7 @@ func (d *userDao) Update(u gen.UpdateUserParams) rest_errors.RestErr {
 	return nil
 }
 
-func (d *userDao) Delete(userId int64) rest_errors.RestErr {
+func (d *UserDao) Delete(userId int64) rest_errors.RestErr {
 	result, err := d.dbq.DeleteUser(context.Background(), int32(userId))
 	if err != nil {
 		logger.Error("delete user", err)
@@ -79,7 +81,7 @@ func (d *userDao) Delete(userId int64) rest_errors.RestErr {
 	return nil
 }
 
-func (d *userDao) FindByStatus(status string) ([]gen.FindByStatusRow, rest_errors.RestErr) {
+func (d *UserDao) FindByStatus(status string) ([]gen.FindByStatusRow, rest_errors.RestErr) {
 	result, err := d.dbq.FindByStatus(context.Background(), nillableStr(status))
 	if err != nil {
 		logger.Error("FindByStatus", err)
@@ -88,7 +90,7 @@ func (d *userDao) FindByStatus(status string) ([]gen.FindByStatusRow, rest_error
 	return result, nil
 }
 
-func (d *userDao) FindByEmailAndPsw(arg gen.FindByEMailAndPswParams) (gen.FindByEMailAndPswRow, rest_errors.RestErr) {
+func (d *UserDao) FindByEmailAndPsw(arg gen.FindByEMailAndPswParams) (gen.FindByEMailAndPswRow, rest_errors.RestErr) {
 	result, err := d.dbq.FindByEMailAndPsw(context.Background(), arg)
 	if err != nil {
 		logger.Error("find user", err)

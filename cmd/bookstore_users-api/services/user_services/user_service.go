@@ -11,18 +11,21 @@ import (
 	"github.com/chernyshev-alex/bookstore/pkg/bookstore_utils_go/rest_errors"
 )
 
-type usersService struct {
-	UserService
-	userDao user_dao.UserDao
+var (
+	_ UserServiceIntf = (*UsersService)(nil)
+)
+
+type UsersService struct {
+	userDao user_dao.UserDaoIntf
 }
 
-func NewService(userDao user_dao.UserDao) UserService {
-	return &usersService{
+func NewService(userDao user_dao.UserDaoIntf) *UsersService {
+	return &UsersService{
 		userDao: userDao,
 	}
 }
 
-func (s *usersService) GetUser(userId int64) (*models.User, rest_errors.RestErr) {
+func (s *UsersService) GetUser(userId int64) (*models.User, rest_errors.RestErr) {
 	result, err := s.userDao.Get(userId)
 	if err != nil {
 		return nil, err
@@ -37,7 +40,7 @@ func (s *usersService) GetUser(userId int64) (*models.User, rest_errors.RestErr)
 	}, nil
 }
 
-func (s *usersService) CreateUser(u models.User) (*models.User, rest_errors.RestErr) {
+func (s *UsersService) CreateUser(u models.User) (*models.User, rest_errors.RestErr) {
 	if err := u.Validate(); err != nil {
 		return nil, err
 	}
@@ -60,7 +63,7 @@ func (s *usersService) CreateUser(u models.User) (*models.User, rest_errors.Rest
 	return &u, nil
 }
 
-func (s *usersService) UpdateUser(isPartial bool, u models.User) (*models.User, rest_errors.RestErr) {
+func (s *UsersService) UpdateUser(isPartial bool, u models.User) (*models.User, rest_errors.RestErr) {
 	cu, err := s.GetUser(u.Id)
 	if err != nil {
 		return nil, err
@@ -99,11 +102,11 @@ func (s *usersService) UpdateUser(isPartial bool, u models.User) (*models.User, 
 	return cu, nil
 }
 
-func (s *usersService) DeleteUser(userId int64) rest_errors.RestErr {
+func (s *UsersService) DeleteUser(userId int64) rest_errors.RestErr {
 	return s.userDao.Delete(userId)
 }
 
-func (s *usersService) SearchUsersByStatus(status string) ([]models.User, rest_errors.RestErr) {
+func (s *UsersService) SearchUsersByStatus(status string) ([]models.User, rest_errors.RestErr) {
 	result, err := s.userDao.FindByStatus(status)
 	if err != nil {
 		return nil, err
@@ -123,7 +126,7 @@ func (s *usersService) SearchUsersByStatus(status string) ([]models.User, rest_e
 	return ls, nil
 }
 
-func (s *usersService) LoginUser(rq models.LoginRequest) (*models.User, rest_errors.RestErr) {
+func (s *UsersService) LoginUser(rq models.LoginRequest) (*models.User, rest_errors.RestErr) {
 	input := gen.FindByEMailAndPswParams{
 		Email:    rq.Email,
 		Password: nillableStr(rq.Password),

@@ -12,11 +12,11 @@ import (
 )
 
 type UserController struct {
-	srv          user_services.UserService
+	srv          user_services.UserServiceIntf
 	oauthService oauth.OAuthInterface
 }
 
-func ProvideUserController(serviceIntf user_services.UserService,
+func ProvideUserController(serviceIntf user_services.UserServiceIntf,
 	oauthService oauth.OAuthInterface) *UserController {
 	return &UserController{
 		srv:          serviceIntf,
